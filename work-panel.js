@@ -2,6 +2,11 @@
   'use strict';
 
   const fileCache = new Map();
+  const workAliases = new Map([
+    ['medical-review', 'pediatric-launch'],
+    ['service-redirects', 'technical-seo'],
+    ['glasses-content', 'september-content']
+  ]);
   let workById = new Map();
   let openButtons = new Map();
   let dialog;
@@ -217,13 +222,41 @@
     title.textContent = work.title || 'Подробности работы';
     body.replaceChildren();
     body.append(element('p', 'work-lead', work.result));
-    body.append(comparison(work.before, work.after));
+    const facts = Array.isArray(work.facts) ? work.facts.slice(0, 3) : [];
+    if (facts.length) {
+      const list = element('dl', 'work-facts');
+      for (const fact of facts) {
+        const item = element('div', 'work-fact');
+        item.append(element('dt', '', fact.label), element('dd', '', fact.value));
+        list.append(item);
+      }
+      body.append(list);
+    }
     if (work.why) {
-      const purpose = element('p', 'work-purpose');
-      purpose.append(element('strong', '', 'Зачем это нужно: '), document.createTextNode(work.why));
+      const purpose = element('section', 'work-purpose');
+      purpose.append(element('h3', '', 'Для чего'), element('p', '', work.why));
       body.append(purpose);
     }
-    if (Array.isArray(work.changes) && work.changes.length) {
+    const sections = Array.isArray(work.sections) ? work.sections : [];
+    for (const item of sections) {
+      const section = element('section', 'work-section');
+      if (item.title) section.append(element('h3', '', item.title));
+      for (const paragraph of Array.isArray(item.paragraphs) ? item.paragraphs : []) {
+        section.append(element('p', '', paragraph));
+      }
+      if (Array.isArray(item.bullets) && item.bullets.length) {
+        const list = element('ul', 'change-list');
+        item.bullets.forEach((bullet) => list.append(element('li', '', bullet)));
+        section.append(list);
+      }
+      if (Array.isArray(item.links) && item.links.length) section.append(linkList(item.links));
+      body.append(section);
+    }
+    if (!sections.length && typeof work.before === 'string' && work.before.trim() &&
+        typeof work.after === 'string' && work.after.trim()) {
+      body.append(comparison(work.before, work.after));
+    }
+    if (!sections.length && Array.isArray(work.changes) && work.changes.length) {
       const section = element('section', 'work-changes');
       const list = element('ul', 'change-list');
       work.changes.forEach((change) => list.append(element('li', '', change)));
@@ -283,8 +316,13 @@
     finishClose();
   }
 
+  function resolveId(id) {
+    const requestedId = String(id);
+    return workAliases.get(requestedId) || requestedId;
+  }
+
   function openWork(id) {
-    const work = workById.get(String(id));
+    const work = workById.get(resolveId(id));
     if (!work || !dialog) return false;
     if (currentId === work.id && dialog.open) return true;
     const firstOpen = !dialog.open;
@@ -297,6 +335,9 @@
     currentId = work.id;
     document.body.classList.add('drawer-open');
     if (firstOpen) dialog.showModal();
+    // A closed native dialog has no scroll layout; reset after it is visible.
+    body.scrollTop = 0;
+    dialog.scrollTop = 0;
     title.focus({ preventScroll: true });
     if (typeof callbacks.onOpen === 'function') callbacks.onOpen(work.id);
     return true;
@@ -307,7 +348,7 @@
     table.setAttribute('aria-label', 'Выполненные работы за сентябрь');
     const head = element('thead');
     const headingRow = element('tr');
-    for (const label of ['Что сделали', 'Что изменилось', 'Подробности']) {
+    for (const label of ['Что сделали', 'Для чего', 'Подробнее']) {
       const cell = element('th', '', label);
       cell.scope = 'col';
       headingRow.append(cell);
@@ -319,10 +360,10 @@
       const description = element('td', 'work-description');
       description.dataset.label = 'Что сделали';
       description.append(element('h3', 'work-name', work.title), element('p', 'work-summary', work.summary));
-      const result = element('td', 'work-result', work.result);
-      result.dataset.label = 'Что изменилось';
+      const result = element('td', 'work-result', work.why);
+      result.dataset.label = 'Для чего';
       const action = element('td', 'work-action');
-      action.dataset.label = 'Подробности';
+      action.dataset.label = 'Подробнее';
       const button = element('button', 'work-open', 'Подробнее');
       button.type = 'button';
       button.dataset.workId = work.id;
@@ -380,5 +421,5 @@
     return window.ReportWorks;
   }
 
-  window.ReportWorks = { init, openWork, close };
+  window.ReportWorks = { init, openWork, close, resolveId };
 })();

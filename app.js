@@ -10,6 +10,7 @@
   }
   const $ = id => document.getElementById(id);
   const tabs = [$('tab-results'), $('tab-work')];
+  $('tab-work').querySelector('.tab-count').textContent = String(data.work.works.length);
   const panels = [$('panel-results'), $('panel-work')];
   const pageSize = window.matchMedia('(max-width:700px)').matches ? 10 : 25;
   const state = {tab:0, search:'', direction:'', limit:pageSize, engine:'yandex', scroll:[0,0]};
@@ -136,7 +137,9 @@
       chooseTab(1,{updateRoute:false});
       let id;
       try { id = decodeURIComponent(hash.slice(6)); } catch { id = ''; }
-      if (!window.ReportWorks.openWork(id)) history.replaceState(null,'','#works');
+      const resolvedId = window.ReportWorks.resolveId(id);
+      if (!window.ReportWorks.openWork(resolvedId)) history.replaceState(null,'','#works');
+      else if (resolvedId !== id) history.replaceState(null,'',`#work/${encodeURIComponent(resolvedId)}`);
     } else {
       window.ReportWorks.close();
       chooseTab(hash === '#works' ? 1 : 0,{updateRoute:false});
