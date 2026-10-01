@@ -234,7 +234,7 @@
     }
     if (work.why) {
       const purpose = element('section', 'work-purpose');
-      purpose.append(element('h3', '', 'Для чего'), element('p', '', work.why));
+      purpose.append(element('h3', '', 'Для чего это нужно'), element('p', '', work.why));
       body.append(purpose);
     }
     const sections = Array.isArray(work.sections) ? work.sections : [];
@@ -348,7 +348,7 @@
     table.setAttribute('aria-label', 'Выполненные работы за сентябрь');
     const head = element('thead');
     const headingRow = element('tr');
-    for (const label of ['Что сделали', 'Для чего', 'Подробнее']) {
+    for (const label of ['Что сделали', 'Краткое описание', 'Для чего это нужно', 'Подробнее']) {
       const cell = element('th', '', label);
       cell.scope = 'col';
       headingRow.append(cell);
@@ -359,9 +359,12 @@
       const row = element('tr', 'work-row');
       const description = element('td', 'work-description');
       description.dataset.label = 'Что сделали';
-      description.append(element('h3', 'work-name', work.title), element('p', 'work-summary', work.summary));
+      description.append(element('h3', 'work-name', work.title));
+      const overview = element('td', 'work-overview');
+      overview.dataset.label = 'Краткое описание';
+      overview.append(element('p', 'work-summary', work.summary));
       const result = element('td', 'work-result', work.why);
-      result.dataset.label = 'Для чего';
+      result.dataset.label = 'Для чего это нужно';
       const action = element('td', 'work-action');
       action.dataset.label = 'Подробнее';
       const button = element('button', 'work-open', 'Подробнее');
@@ -373,7 +376,7 @@
       button.addEventListener('click', () => openWork(work.id), { signal: listeners.signal });
       openButtons.set(work.id, button);
       action.append(button);
-      row.append(description, result, action);
+      row.append(description, overview, result, action);
       rows.append(row);
     }
     table.append(head, rows);

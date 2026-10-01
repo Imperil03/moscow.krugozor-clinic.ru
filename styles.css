@@ -247,6 +247,36 @@
   .work-section h3, .work-purpose h3, .work-evidence > h3, .work-page-links > h3 { font-size: 16px; margin-bottom: 10px; }
   .work-section p, .work-section ul { font-size: 13px; line-height: 1.8; }
   .works-table .work-result { font-size: 13px; }
-  .works-table .work-result::before { content: 'Для чего'; display: block; margin: 16px 0 6px; color: var(--ink); font-weight: 600; font-size: 12px; }
+  .works-table .work-result::before { content: attr(data-label); display: block; margin: 16px 0 6px; color: var(--ink); font-weight: 600; font-size: 12px; }
+}
+
+/* Keep the action, description and purpose distinct even with longer client copy. */
+.works-table { table-layout: fixed; }
+.works-table th:first-child { width: 24%; }
+.works-table th:nth-child(2) { width: 29%; }
+.works-table th:last-child { width: 140px; }
+.works-table td, .works-table th { padding-left: 24px; padding-right: 24px; }
+.works-table .work-name { margin: 0; font-size: 16px; line-height: 1.6; }
+.works-table .work-summary, .works-table .work-result { font-size: 14px; line-height: 1.8; }
+.works-table .work-summary { color: #485974; }
+.works-table .work-result { font-weight: 500; }
+@media (max-width: 1100px) {
+  .works-table, .works-table tbody { display: block; width: 100%; }
+  .works-table thead { display: none; }
+  .works-table .work-row { display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px 32px; padding: 28px; border-bottom: 1px solid var(--line); }
+  .works-table .work-row:last-child { border-bottom: 0; }
+  .works-table td { display: block; width: auto; padding: 0; border: 0; margin: 0; min-width: 0; }
+  .works-table .work-description { grid-column: 1 / -1; }
+  .works-table .work-action { grid-column: 1 / -1; }
+  .works-table td:last-child { margin: 0; }
+  .works-table .work-overview::before, .works-table .work-result::before {
+    content: attr(data-label); display: block; margin: 0 0 8px;
+    color: var(--ink); font-weight: 600; font-size: 12px; line-height: 1.5;
+  }
+}
+@media (max-width: 700px) {
+  .works-table .work-row { grid-template-columns: 1fr; gap: 20px; padding: 28px 20px; }
+  .works-table .work-name { font-size: 15px; }
+  .works-table .work-summary, .works-table .work-result { font-size: 13px; }
 }
 
