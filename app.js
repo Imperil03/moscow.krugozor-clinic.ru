@@ -29,7 +29,7 @@
   }
 
   function renderRow(row) {
-    let html = `<tr><td><span class="query-text">${escape(row.query)}</span><span class="query-cluster">${escape(row.displayName)}</span></td>`;
+    let html = `<tr><td><span class="query-text">${escape(row.query)}</span></td>`;
     for (const engine of ['yandex','google']) {
       const value = row[engine];
       const before = value.before === null ? '—' : value.before;
