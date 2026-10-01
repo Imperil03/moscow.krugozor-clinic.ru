@@ -113,3 +113,69 @@
   .kpi-value-column { flex-direction: row; align-items: baseline; justify-content: space-between; }
   .kpi-arrow { display: none; }
 }
+
+/* Continuous period bands and a real gutter keep each search engine readable. */
+:root {
+  --table-group-line: #d3d8e6;
+  --table-past: #f4f5f8;
+  --table-current: #eaf4f2;
+  --table-current-head: #d9ebe7;
+  --table-group-head: #e9e6f8;
+}
+.positions-table thead { background: transparent; }
+.positions-table .query-heading { background: #f4f3fb; }
+.positions-table th.engine-group {
+  padding: 15px 12px;
+  background: var(--table-group-head);
+  font-size: 16px;
+  font-weight: 700;
+  border-bottom: 1px solid #cfc9e9;
+}
+.positions-table th.period-before,
+.positions-table tbody td.rank-before { background: var(--table-past); }
+.positions-table th.period-after { background: var(--table-current-head); }
+.positions-table tbody td.rank-after { background: var(--table-current); }
+.positions-table th.delta-heading { background: #f1effa; }
+.positions-table tbody td.engine-yandex:not(.rank-before):not(.rank-after),
+.positions-table tbody td.engine-google:not(.rank-before):not(.rank-after) { background: #faf9fd; }
+.positions-table th.period-before,
+.positions-table th.period-after { padding-top: 12px; padding-bottom: 12px; }
+.positions-table th time {
+  display: block;
+  margin-top: 5px;
+  color: #5d6a80;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.positions-table th.period-after { color: #185e59; font-weight: 700; }
+.positions-table th.period-after time { color: #346d68; }
+.positions-table .engine-yandex.engine-group,
+.positions-table .engine-yandex.period-before,
+.positions-table td.engine-yandex.rank-before { border-left: 1px solid var(--table-group-line); }
+.positions-table th.period-after,
+.positions-table td.rank-after { border-left: 1px solid #d4e2df; border-right: 1px solid #d4e2df; }
+.positions-table .engine-google.engine-group,
+.positions-table .engine-google.period-before,
+.positions-table td.engine-google.rank-before {
+  border-left: 12px solid var(--surface);
+  box-shadow: inset 1px 0 0 var(--table-group-line);
+}
+.positions-table tbody tr:hover td { background-color: #f7f7fc; }
+.positions-table tbody tr:hover td.rank-before { background-color: #edeff5; }
+.positions-table tbody tr:hover td.rank-after { background-color: #deeeea; }
+@media (max-width: 700px) {
+  .positions-table .engine-google.period-before,
+  .positions-table td.engine-google.rank-before {
+    border-left: 1px solid var(--table-group-line);
+    box-shadow: none;
+  }
+  .positions-table th.period-before,
+  .positions-table th.period-after { padding-left: 2px; padding-right: 2px; }
+  .positions-table th time { margin-top: 4px; }
+}
+@media (max-width: 370px) {
+  .positions-table th.period-before,
+  .positions-table th.period-after { padding-left: 1px; padding-right: 1px; }
+}
