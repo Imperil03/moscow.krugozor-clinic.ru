@@ -194,6 +194,7 @@
     switch (evidence.type) {
       case 'text-comparison':
         content.append(comparison(evidence.before, evidence.after));
+        if (Array.isArray(evidence.links) && evidence.links.length) content.append(linkList(evidence.links));
         break;
       case 'table':
         content.append(evidenceTable(evidence));
