@@ -44,6 +44,30 @@
     return url.href;
   }
 
+  function imageEvidence(evidence) {
+    const figure = element('figure', 'evidence-image');
+    if (typeof evidence.url !== 'string' ||
+        !/^evidence\/[a-zA-Z0-9][a-zA-Z0-9._-]*\.(?:jpg|png|webp)$/.test(evidence.url)) {
+      figure.append(element('p', 'work-note', 'Снимок недоступен.'));
+      return figure;
+    }
+    const url = new URL(evidence.url, document.baseURI);
+    if (url.origin !== location.origin) return figure;
+    const image = element('img');
+    image.alt = evidence.alt || evidence.title || 'Снимок страницы';
+    image.loading = 'lazy';
+    image.src = url.href;
+    const link = element('a');
+    link.href = url.href;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.setAttribute('aria-label', 'Открыть снимок в полном размере');
+    link.append(image);
+    figure.append(link);
+    if (evidence.caption) figure.append(element('figcaption', '', evidence.caption));
+    return figure;
+  }
+
   function linkList(links, className = 'work-links') {
     const list = element('ul', className);
     for (const link of Array.isArray(links) ? links : []) {
@@ -198,6 +222,9 @@
         break;
       case 'table':
         content.append(evidenceTable(evidence));
+        break;
+      case 'image':
+        content.append(imageEvidence(evidence));
         break;
       case 'links':
         content.append(linkList(evidence.links));

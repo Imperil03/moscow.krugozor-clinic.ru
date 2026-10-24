@@ -292,3 +292,7 @@
 @media(max-width:1100px){.report-header{flex-wrap:wrap}.month-field{margin-left:auto}.report-heading{flex:1;min-width:280px}}
 @media(max-width:700px){.month-field{width:100%;margin:0;min-width:0}.month-field select{width:100%}.report-heading{min-width:0;flex:auto}.month-results-note{padding:24px;margin-top:28px}.month-results-note h2{font-size:21px}}
 @media print{.month-field{display:none}}
+.evidence-image{margin:0}
+.evidence-image img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:8px}
+.evidence-image figcaption{margin-top:12px;font-size:13px;line-height:1.7;color:var(--muted)}
+.evidence-image a:focus-visible{display:block;outline:3px solid var(--accent);outline-offset:4px;border-radius:8px}
