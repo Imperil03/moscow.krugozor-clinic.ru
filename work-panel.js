@@ -346,7 +346,7 @@
 
   function renderList(container, works) {
     const table = element('table', 'works-table');
-    table.setAttribute('aria-label', 'Выполненные работы за сентябрь');
+    table.setAttribute('aria-label', callbacks.label || 'Выполненные работы');
     const head = element('thead');
     const headingRow = element('tr');
     for (const label of ['Что сделали', 'Краткое описание', 'Для чего это нужно', 'Подробнее']) {
@@ -394,6 +394,7 @@
       throw new Error('ReportWorks: required list or dialog markup is missing.');
     }
     if (dialog && dialog.open) close();
+    ++focusRevision; // A month change must not restore the previous month's scroll.
     if (listeners) listeners.abort();
     listeners = new AbortController();
     callbacks = options;

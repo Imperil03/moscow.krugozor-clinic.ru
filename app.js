@@ -10,12 +10,14 @@
   }
   const $ = id => document.getElementById(id);
   const tabs = [$('tab-results'), $('tab-work')];
-  $('tab-work').querySelector('.tab-count').textContent = String(data.work.works.length);
   const panels = [$('panel-results'), $('panel-work')];
   const pageSize = window.matchMedia('(max-width:700px)').matches ? 10 : 25;
   const state = {tab:0, search:'', direction:'', limit:pageSize, engine:'yandex', scroll:[0,0]};
   const rows = data.ranking.rows;
   let routing = false;
+  let month = null;
+  const months = {'2026-09': {label:'Сентябрь 2026', when:'сентябре', works:data.work.works},
+    '2026-10': {label:'Октябрь 2026', when:'октябре', works:window.REPORT_OCTOBER_WORKS?.works || []}};
   let queryTimer;
   $('show-more').firstChild.textContent = `Показать ещё ${pageSize} `;
   const escape = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -121,17 +123,59 @@
     });
   });
 
-  window.ReportWorks.init(data.work.works,{
-    onOpen(id) {
-      if (!routing) history.pushState(null,'',`#work/${encodeURIComponent(id)}`);
-    },
-    onClose() {
-      if (!routing) history.replaceState(null,'','#works');
+  function monthFromRoute() {
+    const selected = new URL(location.href).searchParams.get('month');
+    if (Object.hasOwn(months, selected)) return selected;
+    if (!selected && location.hash.startsWith('#work/')) {
+      let id;
+      try { id = decodeURIComponent(location.hash.slice(6)); } catch { id = ''; }
+      if (data.work.works.some(work => work.id === window.ReportWorks.resolveId(id))) return '2026-09';
     }
+    return '2026-10';
+  }
+
+  function applyMonth(next) {
+    if (month === next) return;
+    month = next;
+    const selected = months[month];
+    $('report-month').value = month;
+    const heading = `SEO-отчёт за ${month === '2026-09' ? 'сентябрь' : 'октябрь'} 2026`;
+    $('report-title').textContent = heading;
+    document.title = `Кругозор — ${heading}`;
+    $('report-month-footer').textContent = selected.label;
+    $('work-month-heading').textContent = `Что сделали в ${selected.when}`;
+    $('tab-work').querySelector('.tab-count').textContent = String(selected.works.length);
+    $('september-results').hidden = month !== '2026-09';
+    $('october-results').hidden = month !== '2026-10';
+    state.scroll = [0,0];
+    window.ReportWorks.init(selected.works, {
+      label:`Выполненные работы в ${selected.when}`,
+      onOpen(id) {
+        if (!routing) history.pushState(null,'',`#work/${encodeURIComponent(id)}`);
+      },
+      onClose() {
+        if (!routing) history.replaceState(null,'','#works');
+      }
+    });
+  }
+
+  $('report-month').addEventListener('change', event => {
+    const url = new URL(location.href);
+    url.searchParams.set('month', event.target.value);
+    if (url.hash.startsWith('#work/')) url.hash = '#works';
+    history.pushState(null,'',url);
+    route();
   });
 
   function route() {
     routing = true;
+    const nextMonth = monthFromRoute();
+    const canonicalRoute = new URL(location.href);
+    if (canonicalRoute.searchParams.get('month') !== nextMonth) {
+      canonicalRoute.searchParams.set('month', nextMonth);
+      history.replaceState(null,'',canonicalRoute);
+    }
+    applyMonth(nextMonth);
     const hash = location.hash;
     if (hash.startsWith('#work/')) {
       chooseTab(1,{updateRoute:false});
@@ -142,7 +186,7 @@
       else if (resolvedId !== id) history.replaceState(null,'',`#work/${encodeURIComponent(resolvedId)}`);
     } else {
       window.ReportWorks.close();
-      chooseTab(hash === '#works' ? 1 : 0,{updateRoute:false});
+      chooseTab(hash === '#works' || (!hash && month === '2026-10') ? 1 : 0,{updateRoute:false});
     }
     routing = false;
   }
