@@ -1,58 +1,11 @@
-#october-results { min-width:0; }
-#october-results .oct-introduction { margin:0 0 20px;padding:20px 24px; }
-#october-results h2 { margin:0 0 12px;font-size:27px;line-height:1.3;letter-spacing:-.025em; }
-#october-results .oct-period { color:var(--ink);font-size:18px;font-weight:600;margin:0 0 7px; }
-#october-results .oct-context { color:var(--muted);font-size:13px;margin:0 0 10px; }
-#october-results .oct-method { max-width:85ch;font-size:13px;line-height:1.8;margin:10px 0;color:var(--muted); }
-#october-results .oct-notes { font-size:13px;line-height:1.8;color:var(--muted);padding-left:20px;margin:16px 0 0; }
-#october-results .oct-method-details { margin:0 0 24px;padding:16px 20px; }
-#october-results .oct-method-details>summary { font-size:13px;line-height:1.7;font-weight:600;cursor:pointer;color:var(--ink); }
-#october-results .oct-method-details>summary:focus-visible { outline:2px solid var(--accent);outline-offset:4px; }
-#october-results .oct-provider-flag { font-size:11px;color:var(--muted);margin-left:2px; }
-#october-results .oct-filters { display:grid;grid-template-columns:1.2fr 1fr 1.4fr;gap:16px;margin-bottom:22px; }
-#october-results .oct-filter { display:flex;flex-direction:column;gap:7px;min-width:0;font-size:12px;font-weight:600;color:var(--ink); }
-#october-results .oct-filter input,#october-results .oct-filter select { width:100%;min-width:0;height:44px;padding:10px 12px;border:1px solid #cfd7e5;border-radius:8px;background:var(--surface);font:inherit;font-size:13px;font-weight:400;color:var(--ink); }
-#october-results .oct-filter input:focus-visible,#october-results .oct-filter select:focus-visible,#october-results .oct-table-wrap:focus-visible { outline:2px solid var(--accent);outline-offset:3px; }
-#october-results .oct-cohort-description { margin:0 0 20px;font-size:13px;line-height:1.7;color:var(--muted);max-width:90ch; }
-#october-results .oct-kpi-grid { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-bottom:24px; }
-#october-results .oct-kpi { padding:20px;min-width:0; }
-#october-results .oct-kpi h3 { font-size:14px;line-height:1.5;font-weight:600;margin:0 0 14px; }
-#october-results .oct-kpi-values { display:flex;align-items:center;gap:14px;font-size:31px;line-height:1.2;font-weight:600;font-variant-numeric:tabular-nums; }
-#october-results .oct-kpi-values span:first-child { color:var(--muted); }
-#october-results .oct-kpi-values .oct-arrow { color:var(--muted);font-size:20px;font-weight:400; }
-#october-results .oct-kpi-value { font-size:29px;line-height:1.3;font-weight:600;font-variant-numeric:tabular-nums; }
-#october-results .oct-kpi-note { font-size:11px;line-height:1.7;color:var(--muted);margin:10px 0 0; }
-#october-results .oct-kpi-change { font-size:12px;line-height:1.6;font-weight:600;margin:6px 0 0; }
-#october-results .oct-query-heading { display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:16px; }
-#october-results .oct-query-heading h3 { font-size:22px;margin:0;line-height:1.3; }
-#october-results .oct-table-wrap { max-width:100%;overflow-x:auto;scrollbar-width:thin; }
-#october-results .oct-positions-table { min-width:860px;table-layout:fixed; }
-#october-results .oct-positions-table col:nth-child(1) { width:34%; }
-#october-results .oct-positions-table col:nth-child(2),#october-results .oct-positions-table col:nth-child(3) { width:12%; }
-#october-results .oct-positions-table col:nth-child(4) { width:22%; }
-#october-results .oct-positions-table col:nth-child(5) { width:20%; }
-#october-results .oct-positions-table th { padding-top:14px;padding-bottom:14px; }
-#october-results .oct-positions-table .delta { font-size:11px; }
-#october-results .oct-positions-table a { font-size:12px;line-height:1.6; }
-#october-results .oct-target-link { display:block;margin-top:5px;color:var(--muted); }
-#october-results .oct-coverage { color:var(--muted);font-size:12px;line-height:1.7;margin:16px 0 0; }
-#october-results .oct-loading { margin:0;padding:25px;font-size:14px;line-height:1.8; }
-@media(max-width:980px) {
-  #october-results .oct-kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:14px; }
-  #october-results .oct-filters { grid-template-columns:1fr 1fr; }
-  #october-results .oct-filter-search { grid-column:1/-1; }
-}
-@media(max-width:600px) {
-  #october-results .oct-introduction { padding:20px 18px; }
-  #october-results h2 { font-size:23px; }
-  #october-results .oct-period { font-size:16px; }
-  #october-results .oct-filters { grid-template-columns:minmax(0,1fr);gap:14px; }
-  #october-results .oct-filter-search { grid-column:auto; }
-  #october-results .oct-kpi { padding:16px 13px; }
-  #october-results .oct-kpi h3 { font-size:12px;margin-bottom:10px; }
-  #october-results .oct-kpi-values { font-size:25px;gap:8px; }
-  #october-results .oct-kpi-value { font-size:23px; }
-  #october-results .oct-kpi-values .oct-arrow { font-size:16px; }
-  #october-results .oct-query-heading { flex-direction:column;align-items:flex-start; }
-  #october-results .oct-query-heading h3 { font-size:20px; }
+/* Only the additional date requires column and legend adaptations. Visual styles are shared with September. */
+#october-results .positions-table .query-col { width: 42%; }
+#october-results .positions-table .rank-col { width: 12%; }
+#october-results .positions-table .delta-col { width: 22%; }
+#october-results .table-filters { flex-wrap: wrap; }
+#october-results .chart-heading, #october-results .chart-legend { flex-wrap: wrap; }
+#october-results .legend-middle { background: var(--before); opacity: .55; }
+#october-results .chart-bar-middle { fill: var(--before); opacity: .55; }
+@media(max-width:700px) {
+  #october-results .positions-table { min-width: 660px; }
 }
