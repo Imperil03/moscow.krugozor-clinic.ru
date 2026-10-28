@@ -37,7 +37,7 @@
   function percentage(count,total) { return total ? new Intl.NumberFormat('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1}).format(100*count/total)+'%' : '—'; }
   function card(top,from,label,selected) {
     const common = commonRows(selected,from), before = countTop(common,from,top), after = countTop(common,2,top), diff = after-before;
-    return `<section class="kpi-card" aria-labelledby="oct-kpi-${top}-${from}"><h2 id="oct-kpi-${top}-${from}">Яндекс · топ-${top} ${label}</h2><div class="kpi-values"><span class="kpi-value-column"><span class="kpi-period">${shortDate(dates[from].date)}</span><span class="kpi-before">${percentage(before,common.length)}</span></span><span class="kpi-arrow" aria-hidden="true">→</span><span class="kpi-value-column"><span class="kpi-period">${shortDate(dates[2].date)}</span><strong class="kpi-after${diff<0?' delta-negative':''}">${percentage(after,common.length)}</strong></span></div><p class="kpi-count">${common.length ? before+' <span aria-hidden="true">→</span> '+after+' запросов' : 'Нет сопоставимых замеров'}</p></section>`;
+    return `<section class="kpi-card" aria-labelledby="oct-kpi-${top}-${from}"><h2 id="oct-kpi-${top}-${from}">Яндекс · топ-${top} ${label}</h2><div class="kpi-values"><span class="kpi-value-column"><span class="kpi-period">${shortDate(dates[from].date)}</span><span class="kpi-before">${percentage(before,common.length)}</span></span><span class="kpi-arrow" aria-hidden="true">→</span><span class="kpi-value-column"><span class="kpi-period">${shortDate(dates[2].date)}</span><strong class="kpi-after${diff<0?' delta-negative':''}">${percentage(after,common.length)}</strong></span></div><p class="kpi-count" title="По ${common.length} запросам с историей">${common.length ? before+' <span aria-hidden="true">→</span> '+after+' запросов' : 'Нет сопоставимых замеров'}</p></section>`;
   }
   function chart(top, values, roof, common) {
     const legendClasses=['legend-before','legend-middle','legend-after'];
@@ -60,16 +60,11 @@
     $('kpis').innerHTML=card(10,1,'за месяц',selected)+card(3,1,'за месяц',selected)+card(10,0,'с начала',selected)+card(3,0,'с начала',selected);
     const nice=[1,2,3,5,10,15,20,25,50,100,150,200];const max=Math.max(1,...values3,...values10);const step=nice.find(n=>n>=max/4)||Math.ceil(max/4/100)*100;const roof=step*4;
     chart(3,values3,roof,common.length);chart(10,values10,roof,common.length);
-    const newly=selected.filter(r=>!r.available?.[0]&&!r.available?.[1]).length;
-    $('metrics-note').textContent=`Топ-3 — первые три результата, топ-10 — первые десять. Диаграммы: ${common.length} запросов с замерами на всех трёх датах. Доля в карточках рассчитана по одинаковому набору для выбранной пары дат.${newly ? ' '+newly+' новых запросов показаны в таблице отдельно, без прежних позиций.' : ''}`;
-    const label=cohorts.find(c=>c.id===state.cohort)?.label || state.cohort;
-    $('cohort-description').textContent=label+(state.group ? ' · '+state.group : '')+'. Все сохранённые числовые позиции.';
-    $('coverage').textContent=`В выбранном наборе ${selected.length} запросов. Текущий съём завершён для ${selected.filter(successful).length}; ошибок или неполных результатов: ${selected.filter(r=>!successful(r)).length}.`;
-    $('provider-warning').hidden=!selected.some(r=>r.providerWarnings?.length);
+
   }
   function delta(row) {
     if (!successful(row)) return {label:'Ошибка',kind:'none'};
-    if (!row.available?.[1]) return {label:'Первый замер',kind:'none'};
+    if (!row.available?.[1]) return {label:'—',kind:'none'};
     const before=position(row.positions?.[1]),after=position(row.positions?.[2]);
     if (before!==null && after!==null) { const n=before-after;return {label:n?String(Math.abs(n)):'—',kind:n>0?'positive':n<0?'negative':'none',number:n}; }
     if(before===null && after!==null) return {label:after>50?'Найден':'Появился',kind:'new'};
@@ -80,10 +75,10 @@
     if(d.number) arrow=`<svg aria-hidden="true" viewBox="0 0 12 16"><path d="${d.number>0?'m3 8 3-4 3 4M6 4v8':'m3 8 3 4 3-4M6 12V4'}"/></svg>`;
     return `<span class="delta delta-${d.kind}"${d.number?' aria-label="'+(d.number>0?'Рост':'Снижение')+' на '+Math.abs(d.number)+'"':''}>${arrow}${escape(d.label)}</span>`;
   }
-  function valueLabel(row,i) {return i===2&&!successful(row)?'Ошибка':position(row.positions?.[i])===null?'—':String(row.positions[i]);}
+  function valueLabel(row,i) {return i===2&&!successful(row)?'Ошибка':position(row.positions?.[i])===null?'101':String(row.positions[i]);}
   function renderRows() {
     const selected=filteredRows(),visible=selected.slice(0,state.limit);
-    $('rows').innerHTML=visible.map(r=>`<tr><td><span class="query-text">${escape(r.query)}</span><span class="query-cluster">${escape(r.group)}</span></td>${[0,1,2].map(i=>`<td class="${i===2?'rank-after':'rank-before'}${i===2&&position(r.positions?.[i])!==null&&r.positions[i]<=10?' rank-top':''}" title="${escape(!r.available?.[i]?'Нет замера на эту дату':position(r.positions?.[i])===null?'Числовая позиция в исходном замере не указана':dates[i].source)}">${escape(valueLabel(r,i))}${i===2&&r.providerWarnings?.length?'<sup title="Особенности ответа XMLStock; пояснение под таблицей">*</sup>':''}</td>`).join('')}<td>${deltaHtml(r)}</td></tr>`).join('');
+    $('rows').innerHTML=visible.map(r=>`<tr><td><span class="query-text">${escape(r.query)}</span></td>${[0,1,2].map(i=>`<td class="${i===2?'rank-after':'rank-before'}${i===2&&position(r.positions?.[i])!==null&&r.positions[i]<=10?' rank-top':''}" title="${escape(!r.available?.[i]?'Запрос добавлен позже':position(r.positions?.[i])===null?'Нет позиции в замере':'')}">${escape(valueLabel(r,i))}</td>`).join('')}<td>${deltaHtml(r)}</td></tr>`).join('');
     $('table-wrap').hidden=!selected.length;$('empty').hidden=!!selected.length;$('more').hidden=visible.length>=selected.length;
     $('row-count').textContent=`Показано ${visible.length} из ${selected.length}`;$('more').textContent=`Показать ещё ${pageSize}`;$('export').disabled=!selected.length;$('search-clear').hidden=!state.search;
   }
@@ -95,7 +90,7 @@
   $('more').addEventListener('click',()=>{state.limit+=pageSize;renderRows();});
   $('export').addEventListener('click',()=>{
     const cell=v=>'"'+(/^[=+\-@\t\r]/.test(text(v))?"'":'')+text(v).replaceAll('"','""')+'"';
-    const values=[['Запрос','Группа',...dates.map(d=>d.date),'Изменение за месяц','Найденная страница','Источники','Особенности'],...filteredRows().map(r=>[r.query,r.group,...[0,1,2].map(i=>valueLabel(r,i)),delta(r).number??delta(r).label,r.currentUrl,dates.map(d=>d.date+': '+d.source).join('; '),'История Search API и текущий Live различаются; прочерки не заменены на101.'+(r.providerWarnings?.length?' Особенности порядка ответа XMLStock.':'')])];
+    const values=[['Запрос','Группа',...dates.map(d=>d.date),'Изменение за месяц','Найденная страница','Источники','Особенности'],...filteredRows().map(r=>[r.query,r.group,...[0,1,2].map(i=>valueLabel(r,i)),delta(r).number??delta(r).label,r.currentUrl,dates.map(d=>d.date+': '+d.source).join('; '),'101 — условное обозначение отсутствующей позиции. Доступность исторического замера хранится отдельно.'+(r.providerWarnings?.length?' Особенности порядка ответа XMLStock.':'')])];
     const url=URL.createObjectURL(new Blob(['\uFEFF'+values.map(r=>r.map(cell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='krugozor-yandex-three-dates-2026-10-28.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),0);
   });
   buildGroups();render();
