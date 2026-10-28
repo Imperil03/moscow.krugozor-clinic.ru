@@ -55,7 +55,7 @@
     return `<div class="engine-kpi-metric"><h4>Топ-${top}</h4><div class="kpi-values">${before === null ? '' : `<div><span class="kpi-period">Было</span><span class="number before">${number(metric.before)}</span></div>${icon('arrow','kpi-arrow')}`}<div>${before === null ? '' : '<span class="kpi-period">Стало</span>'}<span class="number ${trend}">${number(metric.after)}</span></div></div><p class="kpi-count">из ${number(stats.total)} запросов · ${number(after)}%</p></div>`;
   }
   function engineKpisHTML() {
-    return `<div class="engine-kpi-grid">${M.ENGINES.map(engine => `<section class="engine-kpi-card surface engine-${engine}" aria-labelledby="kpi-heading-${engine}"><h3 class="searcher-name" id="kpi-heading-${engine}">${engine === 'yandex' ? 'Яндекс' : 'Google'}</h3><div class="engine-kpi-metrics">${[10].map(top => kpiHTML(engine,top)).join('')}</div></section>`).join('')}</div>`;
+    return `<div class="engine-kpi-grid">${M.ENGINES.map(engine => `<section class="engine-kpi-card surface engine-${engine}" aria-labelledby="kpi-heading-${engine}"><h3 class="searcher-name" id="kpi-heading-${engine}">${engine === 'yandex' ? 'Яндекс' : 'Google'}</h3><div class="engine-kpi-metrics">${[10,3].map(top => kpiHTML(engine,top)).join('')}</div></section>`).join('')}</div>`;
   }
   function rankCharts() {
     const archive = report.archive;
@@ -155,7 +155,7 @@
     const introBody = report.intro.map(report.archive ? paragraphsHTML : detailParagraphsHTML).join('');
     let intro = introBody && !report.archive ? `<div class="results-intro">${introBody}</div>` : introBody;
     if (report.conclusions.length) intro += '<p class="archive-conclusion-title">Выводы</p>' + report.conclusions.map(paragraphsHTML).join('');
-    return `<div class="results-heading"><h2>Результаты за ${M.monthLabel(state.month).toLowerCase()}</h2>${intro}</div>${report.archive || view ? engineKpisHTML() + rankCharts() + trafficHTML() + queryTableHTML() : trafficHTML() + pendingHTML('results')}`;
+    return `<div class="results-heading"><h2>Результаты за ${M.monthLabel(state.month).toLowerCase()}</h2>${intro}</div>${report.archive || view ? engineKpisHTML() + rankCharts() + queryTableHTML() : pendingHTML('results')}`;
   }
   function worksHTML() {
     if (!report.works.length) return pendingHTML('works');

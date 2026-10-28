@@ -1,5 +1,4 @@
 /* Narrow Moscow adaptations; the base component styles are the supplied reference files. */
-.engine-kpi-metrics{grid-template-columns:minmax(0,1fr)}
 .snapshot-positions .rank-movement{display:inline;font-size:10px;line-height:1;vertical-align:super;margin:0 0 0 -4px;white-space:nowrap;font-weight:500}
 .snapshot-positions td.current{white-space:nowrap}
 .clicks-history{min-width:0}.click-tooltip{font-size:13px;color:var(--muted);min-height:24px;margin-top:10px}
