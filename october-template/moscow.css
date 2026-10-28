@@ -1,0 +1,8 @@
+/* Narrow Moscow adaptations; the base component styles are the supplied reference files. */
+.engine-kpi-metrics{grid-template-columns:minmax(0,1fr)}
+.snapshot-positions .rank-movement{display:inline;font-size:10px;line-height:1;vertical-align:super;margin:0 0 0 -4px;white-space:nowrap;font-weight:500}
+.snapshot-positions td.current{white-space:nowrap}
+.clicks-history{min-width:0}.click-tooltip{font-size:13px;color:var(--muted);min-height:24px;margin-top:10px}
+.click-point{cursor:pointer;outline-offset:3px}.click-point:hover,.click-point:focus{r:6;stroke:var(--positive);stroke-width:2}
+.evidence-block.comparison-screenshot{padding:16px}.evidence-block.comparison-screenshot img{max-width:100%;height:auto}.evidence-block.comparison-screenshot figcaption{font-size:13px;color:var(--muted);margin-top:10px}
+@media(min-width:1001px){.queries-card .table-filters:has(.cohort){grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr)}.queries-card .table-filters .filter-field{min-width:0}.queries-card .table-filters input,.queries-card .table-filters select{width:100%;min-width:0}}
