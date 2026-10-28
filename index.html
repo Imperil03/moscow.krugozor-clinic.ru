@@ -12,10 +12,13 @@
   <link rel="preload" href="assets/fonts/Montserrat-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/Montserrat-Bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20261024-footer-v1">
+  <link rel="stylesheet" href="october-rankings.css?v=20261028-v1">
   <script src="report-data.js?v=20261024-months-v1" defer></script>
   <script src="october-work.js?v=20261026-content-v3" defer></script>
   <script src="work-panel.js?v=20261024-footer-v1" defer></script>
   <script src="app.js?v=20261024-months-v1" defer></script>
+  <script src="october-rankings-data.js?v=20261028-v1" defer></script>
+  <script src="october-rankings.js?v=20261028-v1" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#report-content">К содержанию отчёта</a>
@@ -90,11 +93,59 @@
           <div class="table-footer"><span id="query-count" role="status" aria-live="polite">Показано: 25 из 76</span><button type="button" id="show-more" class="button-secondary">Показать ещё 25 <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg></button></div>
         </section>
         </div>
-        <div id="october-results" class="month-results-note surface">
-          <h2>Результаты октября</h2>
-          <p>Месяц ещё идёт. Итоговое сравнение позиций добавим после завершения октября.</p>
-          <p>Завершённые задачи уже доступны во вкладке «Работы».</p>
-          <a href="#works" class="button-secondary">Посмотреть работы октября</a>
+        <div id="october-results" class="october-rankings">
+          <p id="oct-loading" class="oct-loading surface" role="status">Загружаем проверенные результаты съёма позиций.</p>
+          <div id="oct-content" hidden>
+            <section class="oct-introduction surface" aria-labelledby="oct-heading">
+              <h2 id="oct-heading">Позиции московского сайта в Яндексе</h2>
+              <p id="oct-period" class="oct-period"></p>
+              <p id="oct-context" class="oct-context"></p>
+              <p id="oct-method" class="oct-method"></p>
+              <p id="oct-depth" class="oct-method"></p>
+            </section>
+            <div class="oct-filters" role="group" aria-label="Фильтры октябрьских позиций">
+              <label class="oct-filter" for="oct-cohort">Набор запросов<select id="oct-cohort"></select></label>
+              <label class="oct-filter" for="oct-group">Тематическая группа<select id="oct-group"><option value="">Все группы</option></select></label>
+              <label class="oct-filter oct-filter-search" for="oct-search">Поиск запроса<input id="oct-search" type="search" placeholder="Начните вводить запрос" autocomplete="off"></label>
+            </div>
+            <p id="oct-cohort-description" class="oct-cohort-description"></p>
+            <div class="oct-kpi-grid" aria-label="Сравнение по запросам с исходным замером">
+              <article class="oct-kpi surface">
+                <h3>Запросов в ТОП-3</h3>
+                <div class="oct-kpi-values"><span id="oct-top3-before">—</span><span class="oct-arrow" aria-label="стало">→</span><span id="oct-top3-after">—</span></div>
+                <p id="oct-top3-base" class="oct-kpi-note"></p><p id="oct-top3-change" class="oct-kpi-change"></p>
+              </article>
+              <article class="oct-kpi surface">
+                <h3>Запросов в ТОП-10</h3>
+                <div class="oct-kpi-values"><span id="oct-top10-before">—</span><span class="oct-arrow" aria-label="стало">→</span><span id="oct-top10-after">—</span></div>
+                <p id="oct-top10-base" class="oct-kpi-note"></p><p id="oct-top10-change" class="oct-kpi-change"></p>
+              </article>
+              <article class="oct-kpi surface"><h3>Сопоставлено запросов</h3><div id="oct-paired-value" class="oct-kpi-value">—</div><p id="oct-paired-note" class="oct-kpi-note"></p></article>
+              <article class="oct-kpi surface"><h3>Новых запросов без базы</h3><div id="oct-new-value" class="oct-kpi-value">—</div><p id="oct-new-note" class="oct-kpi-note"></p></article>
+            </div>
+            <details class="oct-method-details surface">
+              <summary>Как считали позиции</summary>
+              <p id="oct-method-full" class="oct-method"></p>
+              <p id="oct-depth-full" class="oct-method"></p>
+              <ul id="oct-notes" class="oct-notes" hidden></ul>
+            </details>
+            <section class="queries-card surface" aria-labelledby="oct-queries-heading">
+              <div class="oct-query-heading"><h3 id="oct-queries-heading">Все запросы выбранного набора</h3><button id="oct-export" class="button-secondary" type="button">Скачать выборку CSV</button></div>
+              <div id="oct-table-wrap" class="oct-table-wrap table-scroll" role="region" aria-label="Октябрьские позиции, таблица прокручивается по горизонтали" tabindex="0">
+                <table class="positions-table oct-positions-table" aria-describedby="oct-table-note">
+                  <colgroup><col><col><col><col><col></colgroup>
+                  <thead><tr><th class="query-heading" scope="col">Запрос и группа</th><th scope="col"><span id="oct-baseline-heading"></span><br>ТОП-10</th><th scope="col"><span id="oct-current-heading"></span><br>до ТОП-100</th><th scope="col">Изменение</th><th scope="col">Страница</th></tr></thead>
+                  <tbody id="oct-rows"></tbody>
+                </table>
+              </div>
+              <div id="oct-empty" class="empty-state" hidden><h3>Запросы не найдены</h3><p>Измените поисковую фразу или выбранную группу.</p></div>
+              <div class="table-footer"><span id="oct-row-count" role="status" aria-live="polite"></span><button id="oct-more" class="button-secondary" type="button">Показать ещё 25</button></div>
+              <p id="oct-coverage" class="oct-coverage"></p>
+              <p id="oct-provider-warning" class="table-note" hidden>* В ответе XMLStock отмечены нестандартное число результатов, специальные блоки или повторы между страницами. Сохранён порядок провайдера; позиции вручную не корректировались.</p>
+              <p id="oct-table-note" class="table-note">«За ТОП-10» — прежний замер не зафиксировал место в первой десятке. «Первый замер» — у запроса нет исходных данных. Ошибка съёма не считается отсутствием сайта в выдаче.</p>
+            </section>
+          </div>
+          <noscript><p class="oct-loading surface">Для просмотра таблицы позиций включите JavaScript.</p></noscript>
         </div>
       </section>
       <section id="panel-work" role="tabpanel" aria-labelledby="tab-work" tabindex="-1" hidden>
