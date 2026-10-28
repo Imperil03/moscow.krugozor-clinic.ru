@@ -12,13 +12,14 @@
   <link rel="preload" href="assets/fonts/Montserrat-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/Montserrat-Bold.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20261024-footer-v1">
-  <link rel="stylesheet" href="october-rankings.css?v=20261028-v3">
+  <link rel="stylesheet" href="october-rankings.css?v=20261028-v4">
   <script src="report-data.js?v=20261024-months-v1" defer></script>
   <script src="october-work.js?v=20261026-content-v3" defer></script>
   <script src="work-panel.js?v=20261024-footer-v1" defer></script>
   <script src="app.js?v=20261024-months-v1" defer></script>
-  <script src="october-rankings-data.js?v=20261028-v3" defer></script>
-  <script src="october-rankings.js?v=20261028-v3" defer></script>
+  <script src="october-rankings-data.js?v=20261028-v4" defer></script>
+  <script src="october-clicks-data.js?v=20261028-v1" defer></script>
+  <script src="october-rankings.js?v=20261028-v4" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#report-content">К содержанию отчёта</a>
@@ -103,10 +104,11 @@
             <section class="charts-section" aria-labelledby="oct-charts-title">
               <h2 id="oct-charts-title" class="charts-title">Количество запросов в топ-3 и топ-10</h2>
               <div class="charts-grid">
-                <section class="chart-card surface" aria-labelledby="oct-chart-top3-title"><div class="chart-heading"><h3 id="oct-chart-top3-title">Яндекс · топ-3</h3><div id="oct-legend-top3" class="chart-legend" aria-hidden="true"></div></div><p class="chart-unit">Запросов</p><div id="oct-chart-top3" class="chart-plot"></div></section>
-                <section class="chart-card surface" aria-labelledby="oct-chart-top10-title"><div class="chart-heading"><h3 id="oct-chart-top10-title">Яндекс · топ-10</h3><div id="oct-legend-top10" class="chart-legend" aria-hidden="true"></div></div><p class="chart-unit">Запросов</p><div id="oct-chart-top10" class="chart-plot"></div></section>
+                <section class="chart-card surface" aria-labelledby="oct-chart-yandex-title"><div class="chart-heading"><h3 id="oct-chart-yandex-title">Яндекс</h3><div id="oct-legend-yandex" class="chart-legend" aria-hidden="true"></div></div><p class="chart-unit">Запросов</p><div id="oct-chart-yandex" class="chart-plot"></div></section>
+                <section id="oct-google-chart-card" class="chart-card surface" aria-labelledby="oct-chart-google-title" hidden><div class="chart-heading"><h3 id="oct-chart-google-title">Google</h3><div id="oct-legend-google" class="chart-legend" aria-hidden="true"></div></div><p class="chart-unit">Запросов</p><div id="oct-chart-google" class="chart-plot"></div></section>
               </div>
             </section>
+            <section id="oct-clicks-section" class="charts-section" aria-labelledby="oct-clicks-title" hidden><div class="chart-card surface"><div class="chart-heading"><h2 id="oct-clicks-title" class="charts-title">Клики из Google</h2></div><div id="oct-clicks-chart" class="chart-plot oct-clicks-plot"></div></div></section>
             <section class="queries-card surface" aria-labelledby="oct-queries-title">
               <div class="section-toolbar">
                 <div><h2 id="oct-queries-title">Запросы</h2></div>
@@ -116,11 +118,12 @@
                   <label class="sr-only" for="oct-cohort">Набор запросов</label><select id="oct-cohort"></select>
                 </div>
               </div>
+              <div id="oct-engine" class="mobile-engine oct-engine" role="group" aria-label="Поисковая система"><button id="oct-engine-yandex" type="button" aria-pressed="true">Яндекс</button><button id="oct-engine-google" type="button" aria-pressed="false" hidden>Google</button></div>
               <div id="oct-table-wrap" class="table-scroll" role="region" aria-label="Позиции Яндекса за три даты" tabindex="0">
                 <table class="positions-table" aria-describedby="oct-table-note">
-                  <caption class="sr-only">Позиции Яндекса: 3 сентября, 1 октября и 28 октября 2026 года.</caption>
-                  <colgroup><col class="query-col"><col class="rank-col"><col class="rank-col"><col class="rank-col"><col class="delta-col"></colgroup>
-                  <thead><tr><th rowspan="2" scope="col" class="query-heading">Запрос</th><th colspan="4" scope="colgroup" class="engine-group">Яндекс</th></tr><tr><th scope="col" class="period-before"><time datetime="2026-09-03">03.09.2026</time></th><th scope="col" class="period-before"><time datetime="2026-10-01">01.10.2026</time></th><th scope="col" class="period-after"><time datetime="2026-10-28">28.10.2026</time></th><th scope="col" class="delta-heading">Изменение</th></tr></thead>
+                  <caption id="oct-table-caption" class="sr-only">Позиции за три даты.</caption>
+                  <colgroup><col class="query-col"><col class="rank-col"><col class="rank-col"><col class="rank-col"></colgroup>
+                  <thead><tr><th rowspan="2" scope="col" class="query-heading">Запрос</th><th id="oct-engine-heading" colspan="3" scope="colgroup" class="engine-group">Яндекс</th></tr><tr><th scope="col" class="period-before"><time datetime="2026-09-03">03.09.2026</time></th><th scope="col" class="period-before"><time datetime="2026-10-01">01.10.2026</time></th><th scope="col" class="period-after"><time datetime="2026-10-28">28.10.2026</time></th></tr></thead>
                   <tbody id="oct-rows"></tbody>
                 </table>
               </div>
