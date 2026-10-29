@@ -125,7 +125,7 @@
         if (numeric <= top) count++;
       }
     }
-    return {count, total, measured, percent:measured ? Math.round(count / total * 100) : null};
+    return {count, total, measured, percent:measured ? Math.round(count / total * 1000) / 10 : null};
   }
   function validateData(data) {
     const errors = [], check = (test, message) => { if (!test) errors.push(message); };

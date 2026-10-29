@@ -121,8 +121,10 @@
     const counts = Object.fromEntries(M.ENGINES.map(e => [e,positionColumns[e].length]));
     const selected = M.filterRows(rows,state.filters,report.rankings?.cohorts);
     const heading = engine => positionColumns[engine].map((column,i) => {
-      const metric = '';
-      return `<th id="rank-${engine}-${column.key}" scope="col" class="engine-${engine} period-${column.role} ${i === 0 ? 'engine-start' : ''} ${column.role === 'after' ? 'current' : ''}" aria-label="${dateLabel(column.date)}"><time datetime="${column.date}" aria-label="${dateLabel(column.date)}"><span class="rank-date-full">${dateLabel(column.date)}</span><span class="rank-date-short" aria-hidden="true">${dateLabel(column.date).slice(0,5)}</span></time>${metric}</th>`;
+      const share = M.topShare(selected,engine,column.key,{archive:!!archive});
+      const shareId = `rank-share-${engine}-${column.key}`;
+      const metric = `<span class="rank-header-share"><span class="rank-header-range" aria-hidden="true">1–10</span><span id="${shareId}" class="rank-header-percent" aria-label="${topShareLabel(share)}" title="${topShareLabel(share)}">${topShareText(share)}</span></span>`;
+      return `<th id="rank-${engine}-${column.key}" scope="col" class="engine-${engine} period-${column.role} ${i === 0 ? 'engine-start' : ''} ${column.role === 'after' ? 'current' : ''}" aria-label="${dateLabel(column.date)}" aria-describedby="${shareId}"><time datetime="${column.date}" aria-label="${dateLabel(column.date)}"><span class="rank-date-full">${dateLabel(column.date)}</span><span class="rank-date-short" aria-hidden="true">${dateLabel(column.date).slice(0,5)}</span></time>${metric}</th>`;
     }).join('');
     const columns = M.ENGINES.map(engine => positionColumns[engine].map(() => `<col class="rank-col engine-${engine}">`).join('')).join('');
     const cohorts = report.rankings?.cohorts || [], downloads = report.rankings?.downloads || [];
