@@ -3,5 +3,10 @@
 .snapshot-positions td.current{white-space:nowrap}
 .clicks-history{min-width:0}.click-tooltip{font-size:13px;color:var(--muted);min-height:24px;margin-top:10px}
 .click-point{cursor:pointer;outline-offset:3px}.click-point:hover,.click-point:focus{r:6;stroke:var(--positive);stroke-width:2}
-.evidence-block.comparison-screenshot{padding:16px}.evidence-block.comparison-screenshot img{max-width:100%;height:auto}.evidence-block.comparison-screenshot figcaption{font-size:13px;color:var(--muted);margin-top:10px}
+.evidence-block.comparison-screenshot{padding:16px}.evidence-block.comparison-screenshot img{width:auto;max-width:100%;height:auto;max-height:280px;object-fit:contain}.evidence-block.comparison-screenshot figcaption{font-size:13px;color:var(--muted);margin-top:10px}
 @media(min-width:1001px){.queries-card .table-filters:has(.cohort){grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr)}.queries-card .table-filters .filter-field{min-width:0}.queries-card .table-filters input,.queries-card .table-filters select{width:100%;min-width:0}}
+
+/* Compact previews retain the full screenshot; the link opens the original. */
+.comparison-screenshot>a{display:flex;align-items:center;justify-content:center}
+.comparison-grid.has-images .comparison-screenshot img{width:auto;max-width:100%;height:auto;max-height:260px;object-fit:contain}
+@media(max-width:600px){.comparison-grid.has-images .comparison-screenshot img{max-height:240px}}
