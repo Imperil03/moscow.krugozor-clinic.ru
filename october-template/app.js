@@ -112,10 +112,13 @@
   function topShareLabel(share) {
     return share.percent === null ? 'Нет замеров для расчёта' : `${number(share.count)} из ${number(share.total)} запросов в топ-10`;
   }
+  function queryPopulation() {
+    return report.archive ? report.archive.rows : state.filters.cohort === 'new' ? view.newRows : view.comparisonRows;
+  }
   function queryTableHTML() {
     if (!report.archive && !view) return '';
-    const archive = report.archive, rows = archive ? archive.rows : view.rows;
-    const directions = [...new Set(rows.map(r => r.direction).filter(Boolean))].sort((a,b) => a.localeCompare(b,'ru'));
+    const archive = report.archive, rows = queryPopulation();
+    const directions = [...new Set((archive ? rows : view.rows).map(r => r.direction).filter(Boolean))].sort((a,b) => a.localeCompare(b,'ru'));
     positionColumns = Object.fromEntries(M.ENGINES.map(engine => [engine, archive ? archive.dates[engine].map((d,i,dates) => ({...d,key:i,role:i === dates.length - 1 ? 'after' : i === 0 ? 'start' : 'before'})) :
       ['start','before','after'].filter(role => view[role] && (role !== 'start' || view.start.date !== view.after.date)).map(role => ({key:role,role,date:view[role].date}))]));
     const counts = Object.fromEntries(M.ENGINES.map(e => [e,positionColumns[e].length]));
@@ -128,14 +131,18 @@
     }).join('');
     const columns = M.ENGINES.map(engine => positionColumns[engine].map(() => `<col class="rank-col engine-${engine}">`).join('')).join('');
     const cohorts = report.rankings?.cohorts || [], downloads = report.rankings?.downloads || [];
-    const cohortFilter = cohorts.length ? `<div class="filter-field cohort"><label for="cohort-filter">Выборка запросов</label><div class="select-wrap"><select id="cohort-filter"><option value="all">Все ${rows.length} запросов</option>${cohorts.filter(c => c.id !== 'all').map(c => `<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('')}</select>${icon('chevron')}</div></div>` : '';
+    const cohortFilter = cohorts.length ? `<div class="filter-field cohort"><label for="cohort-filter">Выборка запросов</label><div class="select-wrap"><select id="cohort-filter"><option value="all">Все ${rows.length} запросов</option>${cohorts.filter(c => c.id !== 'all').map(c => `<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('')}${!archive && view.newRows.length ? `<option value="new">Новые запросы (${view.newRows.length})</option>` : ''}</select>${icon('chevron')}</div></div>` : '';
     const legend = `<div class="rank-legend" aria-label="Обозначения текущих позиций"><span>Текущие позиции:</span><span><i class="rank-key rank-top3" aria-hidden="true"></i>Топ-3</span><span><i class="rank-key rank-top10" aria-hidden="true"></i>4–10</span><span><i class="rank-key rank-top30" aria-hidden="true"></i>11–30</span><span><i class="rank-key rank-other" aria-hidden="true"></i>31 и ниже</span></div>`;
-    return `<section class="queries-card surface"><div class="section-heading"><h2>Позиции запросов</h2><div class="ranking-downloads"><button id="export-positions" class="button-secondary" type="button">Скачать позиции</button></div></div><div class="table-filters"><div class="filter-field search"><label for="query-search">Найти запрос</label><input id="query-search" type="search" placeholder="Например, подбор контактных линз" value="${esc(state.filters.search)}"></div>${cohortFilter}<div class="filter-field direction"><label for="direction-filter">Направление</label><div class="select-wrap"><select id="direction-filter"><option value="">Все направления</option>${directions.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('')}</select>${icon('chevron')}</div></div>${!archive && view.before ? `<div class="filter-field trend"><label for="trend-filter">Динамика за месяц</label><div class="select-wrap"><select id="trend-filter">${[['all','Все изменения'],['up','Рост'],['down','Снижение'],['same','Без изменений'],['new','Новые запросы']].map(([v,label]) => `<option value="${v}">${label}</option>`).join('')}</select>${icon('chevron')}</div></div>` : ''}</div>${legend}<div class="mobile-engine" role="group" aria-label="Поисковик в таблице"><button type="button" data-engine="yandex" aria-pressed="${state.engine === 'yandex'}">Яндекс</button><button type="button" data-engine="google" aria-pressed="${state.engine === 'google'}">Google</button></div><p class="table-scroll-hint">Проведите по таблице влево, чтобы увидеть текущие позиции.</p><div class="table-scroll" id="positions-wrap" data-engine="${state.engine}" role="region" tabindex="0" aria-label="Позиции запросов"><table class="positions-table snapshot-positions" style="--rank-columns:${counts.yandex + counts.google};--yandex-columns:${counts.yandex};--google-columns:${counts.google}"><caption class="sr-only">Позиции запросов за ${esc(M.monthLabel(state.month).toLowerCase())}</caption><colgroup><col class="query-col">${columns}</colgroup><thead><tr><th id="query-heading" rowspan="2" scope="col" class="query-heading">Запрос</th><th id="engine-yandex" colspan="${counts.yandex}" scope="colgroup" class="engine-yandex engine-title engine-start">Яндекс</th><th id="engine-google" colspan="${counts.google}" scope="colgroup" class="engine-google engine-title engine-start">Google</th></tr><tr>${M.ENGINES.map(heading).join('')}</tr></thead><tbody id="query-rows"></tbody></table></div><p id="query-empty" class="query-empty" hidden>Запросы не найдены. Измените поиск или фильтры.</p><div class="table-footer"><span id="query-count" role="status" aria-live="polite"></span><button type="button" class="button-secondary" id="show-more">Показать ещё 25</button></div></section>`;
+    return `<section class="queries-card surface"><div class="section-heading"><h2>Позиции запросов</h2><div class="ranking-downloads"><button id="export-positions" class="button-secondary" type="button">Скачать позиции</button></div></div><div class="table-filters"><div class="filter-field search"><label for="query-search">Найти запрос</label><input id="query-search" type="search" placeholder="Например, подбор контактных линз" value="${esc(state.filters.search)}"></div>${cohortFilter}<div class="filter-field direction"><label for="direction-filter">Направление</label><div class="select-wrap"><select id="direction-filter"><option value="">Все направления</option>${directions.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('')}</select>${icon('chevron')}</div></div>${!archive && view.before ? `<div class="filter-field trend"><label for="trend-filter">Динамика за месяц</label><div class="select-wrap"><select id="trend-filter">${[['all','Все изменения'],['up','Рост'],['down','Снижение'],['same','Без изменений']].map(([v,label]) => `<option value="${v}">${label}</option>`).join('')}</select>${icon('chevron')}</div></div>` : ''}</div>${legend}<div class="mobile-engine" role="group" aria-label="Поисковик в таблице"><button type="button" data-engine="yandex" aria-pressed="${state.engine === 'yandex'}">Яндекс</button><button type="button" data-engine="google" aria-pressed="${state.engine === 'google'}">Google</button></div><p class="table-scroll-hint">Проведите по таблице влево, чтобы увидеть текущие позиции.</p><div class="table-scroll" id="positions-wrap" data-engine="${state.engine}" role="region" tabindex="0" aria-label="Позиции запросов"><table class="positions-table snapshot-positions" style="--rank-columns:${counts.yandex + counts.google};--yandex-columns:${counts.yandex};--google-columns:${counts.google}"><caption class="sr-only">Позиции запросов за ${esc(M.monthLabel(state.month).toLowerCase())}</caption><colgroup><col class="query-col">${columns}</colgroup><thead><tr><th id="query-heading" rowspan="2" scope="col" class="query-heading">Запрос</th><th id="engine-yandex" colspan="${counts.yandex}" scope="colgroup" class="engine-yandex engine-title engine-start">Яндекс</th><th id="engine-google" colspan="${counts.google}" scope="colgroup" class="engine-google engine-title engine-start">Google</th></tr><tr>${M.ENGINES.map(heading).join('')}</tr></thead><tbody id="query-rows"></tbody></table></div><p id="query-empty" class="query-empty" hidden>Запросы не найдены. Измените поиск или фильтры.</p><div class="table-footer"><span id="query-count" role="status" aria-live="polite"></span><button type="button" class="button-secondary" id="show-more">Показать ещё 25</button></div></section>`;
   }
   function renderQueries() {
     if (!$('query-rows')) return;
-    const archive = report.archive, allRows = archive ? archive.rows : view.rows;
+    const archive = report.archive, allRows = queryPopulation();
     const filtered = M.filterRows(allRows,state.filters,report.rankings?.cohorts), visible = filtered.slice(0,state.limit);
+    if (!archive) {
+      view.stats = M.statsForRows(filtered,{comparable:state.filters.cohort !== 'new'});
+      $('ranking-summary').innerHTML = engineKpisHTML() + rankCharts();
+    }
     for (const engine of M.ENGINES) for (const column of positionColumns[engine]) {
       const element = $(`rank-share-${engine}-${column.key}`);
       if (!element) continue;
@@ -157,7 +164,7 @@
     const introBody = report.intro.map(report.archive ? paragraphsHTML : detailParagraphsHTML).join('');
     let intro = introBody && !report.archive ? `<div class="results-intro">${introBody}</div>` : introBody;
     if (report.conclusions.length) intro += '<p class="archive-conclusion-title">Выводы</p>' + report.conclusions.map(paragraphsHTML).join('');
-    return `<div class="results-heading"><h2>Результаты за ${M.monthLabel(state.month).toLowerCase()}</h2>${intro}</div>${report.archive || view ? engineKpisHTML() + rankCharts() + queryTableHTML() : pendingHTML('results')}`;
+    return `<div class="results-heading"><h2>Результаты за ${M.monthLabel(state.month).toLowerCase()}</h2>${intro}</div>${report.archive || view ? `<div id="ranking-summary">${engineKpisHTML() + rankCharts()}</div>` + queryTableHTML() : pendingHTML('results')}`;
   }
   function worksHTML() {
     if (!report.works.length) return pendingHTML('works');
@@ -236,7 +243,7 @@
   dialog.addEventListener('cancel',event => { event.preventDefault(); navigate({detail:null}); });
   dialog.addEventListener('click',event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) navigate({detail:null}); } });
   function exportPositions() {
-    const filtered=M.filterRows(view.rows,state.filters,report.rankings.cohorts),ids=new Set(filtered.map(r=>r.id));
+    const filtered=M.filterRows(queryPopulation(),state.filters,report.rankings.cohorts),ids=new Set(filtered.map(r=>r.id));
     const records=[['Запрос','Направление','Поисковик','Дата','Позиция','Есть замер','Статус','URL','Источник']];
     for(const row of window.REPORT_OCTOBER_RANKINGS.rows.filter(r=>ids.has(r.id))) for(const engine of ['yandex','google']) {
       const raw=engine==='yandex'?row:row.google;

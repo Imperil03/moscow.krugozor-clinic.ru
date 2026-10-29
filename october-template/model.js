@@ -55,6 +55,11 @@
     return {...saved, status, value, depth:saved?.depth ?? snapshot?.engines?.[engine]?.depth,
       checkedAt:saved?.checkedAt ?? snapshot?.engines?.[engine]?.checkedAt ?? snapshot?.date};
   }
+  function completeObservation(row, engine, role) {
+    const status = row[engine].observations[role].status, value = row[engine][role];
+    return status === 'not_found' && value === null ||
+      status === 'found' && Number.isInteger(value) && value > 0;
+  }
   function rankingsView(rankings) {
     if (!rankings?.after) return null;
     const {start, before, after} = rankings;
@@ -79,10 +84,13 @@
       }
       return row;
     });
+    const comparisonRows = ENGINES.every(e => matches[e]) ? rows.filter(row => !row.isNew &&
+      ENGINES.every(engine => ['start','before','after'].every(role => completeObservation(row,engine,role)))) : [];
+    const newRows = rows.filter(row => row.isNew && ENGINES.every(engine => completeObservation(row,engine,'after')));
     const stats = {};
     for (const engine of ENGINES) {
-      const comparableRows = rows.filter(r => !r.isNew && r[engine].before !== undefined && r[engine].after !== undefined);
-      const currentRows = rows.filter(r => r[engine].after !== undefined);
+      const comparableRows = comparisonRows;
+      const currentRows = rows.filter(row => ENGINES.every(e => completeObservation(row,e,'after')));
       const comparable = matches[engine] && comparableRows.length > 0;
       const population = comparable ? comparableRows : currentRows;
       const count = (side, top) => population.filter(r => typeof r[engine][side] === 'number' && r[engine][side] <= top).length;
@@ -93,7 +101,7 @@
         top3:{before:comparable ? count('before',3) : null, after:count('after',3)},
         top10:{before:comparable ? count('before',10) : null, after:count('after',10)}};
     }
-    return {start, before, after, rows, stats, metaMatch:ENGINES.every(e => matches[e])};
+    return {start, before, after, rows, comparisonRows, newRows, stats, metaMatch:ENGINES.every(e => matches[e])};
   }
   function filterRows(rows, {search = '', direction = '', trend = 'all', cohort = 'all'} = {}, cohorts = []) {
     const term = normalize(search).replaceAll('ё', 'е');
@@ -126,6 +134,15 @@
       }
     }
     return {count, total, measured, percent:measured ? Math.round(count / total * 1000) / 10 : null};
+  }
+  function statsForRows(rows, {comparable = true} = {}) {
+    return Object.fromEntries(ENGINES.map(engine => {
+      const metric = top => {
+        const before = topShare(rows,engine,'before',{top}), after = topShare(rows,engine,'after',{top});
+        return {before:comparable && before.measured ? before.count : null, after:after.count};
+      };
+      return [engine,{total:rows.length,comparable:comparable && rows.length > 0,top3:metric(3),top10:metric(10)}];
+    }));
   }
   function validateData(data) {
     const errors = [], check = (test, message) => { if (!test) errors.push(message); };
@@ -220,5 +237,5 @@
     }
     return errors;
   }
-  return {ENGINES, months, monthLabel, getReport, defaultMonth, safeHref, safeImageHref, validDate, normalize, rankChange, settingsContext, sameSettings, observation, rankingsView, filterRows, topShare, validateData};
+  return {ENGINES, months, monthLabel, getReport, defaultMonth, safeHref, safeImageHref, validDate, normalize, rankChange, settingsContext, sameSettings, observation, rankingsView, filterRows, topShare, statsForRows, validateData};
 });
