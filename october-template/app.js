@@ -9,6 +9,7 @@
   const detailParagraphsHTML = value => String(value ?? '').split(/\r?\n\s*\r?\n/).filter(p => p.trim()).map(p => `<p>${strongHTML(p)}</p>`).join('');
   const number = value => new Intl.NumberFormat('ru-RU',{maximumFractionDigits:1}).format(value);
   const dateLabel = value => value ? new Intl.DateTimeFormat('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(value + 'T12:00:00Z')) : '';
+  const snapshotDate = (snapshot, engine) => snapshot?.engines?.[engine]?.checkedAt || snapshot?.date;
   const icon = (name, cls = '') => `<svg class="${cls}" width="20" height="20" aria-hidden="true" viewBox="0 0 24 24">${{
     arrow:'<path d="M5 12h14m-5-5 5 5-5 5"/>', chevron:'<path d="m9 5 7 7-7 7"/>',
     external:'<path d="M7 17 17 7M7 7h10v10"/>', work:'<rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 5V3h6v2m-6 6h6m-6 5h6"/>',
@@ -73,7 +74,7 @@
         return Number.isFinite(value) ? `<div class="rank-bar ${side}" style="height:${value / max * 104}px"><span>${number(value)}${archive ? '%' : ''}</span></div>` : '';
       }).join('')}<strong>Топ-${top}</strong></div>`).join('');
       const name = engine === 'yandex' ? 'Яндекс' : 'Google';
-      return `<section class="ranking-chart surface" aria-label="${name}: ${archive ? 'доли запросов по архивной сводке' : 'количество запросов'}"><h3>${name}</h3>${archive ? '<p class="archive-chart-note">Доли запросов по сводке архивного отчёта</p>' : ''}<div class="rank-bars">${bars}</div><div class="chart-legend">${comparable ? `<span><i class="before-key"></i>Было${archive ? '' : ' · ' + dateLabel(view.before.date)}</span>` : ''}<span><i></i>${comparable ? 'Стало' : 'Сейчас'}${archive ? '' : ' · ' + dateLabel(view.after.date)}</span></div></section>`;
+      return `<section class="ranking-chart surface" aria-label="${name}: ${archive ? 'доли запросов по архивной сводке' : 'количество запросов'}"><h3>${name}</h3>${archive ? '<p class="archive-chart-note">Доли запросов по сводке архивного отчёта</p>' : ''}<div class="rank-bars">${bars}</div><div class="chart-legend">${comparable ? `<span><i class="before-key"></i>Было${archive ? '' : ' · ' + dateLabel(snapshotDate(view.before,engine))}</span>` : ''}<span><i></i>${comparable ? 'Стало' : 'Сейчас'}${archive ? '' : ' · ' + dateLabel(snapshotDate(view.after,engine))}</span></div></section>`;
     }).join('')}</div>`;
   }
   function trafficHTML() {
@@ -120,7 +121,7 @@
     const archive = report.archive, rows = queryPopulation();
     const directions = [...new Set((archive ? rows : view.rows).map(r => r.direction).filter(Boolean))].sort((a,b) => a.localeCompare(b,'ru'));
     positionColumns = Object.fromEntries(M.ENGINES.map(engine => [engine, archive ? archive.dates[engine].map((d,i,dates) => ({...d,key:i,role:i === dates.length - 1 ? 'after' : i === 0 ? 'start' : 'before'})) :
-      ['start','before','after'].filter(role => view[role] && (role !== 'start' || view.start.date !== view.after.date)).map(role => ({key:role,role,date:view[role].date}))]));
+      ['start','before','after'].filter(role => view[role] && (role !== 'start' || snapshotDate(view.start,engine) !== snapshotDate(view.after,engine))).map(role => ({key:role,role,date:snapshotDate(view[role],engine)}))]));
     const counts = Object.fromEntries(M.ENGINES.map(e => [e,positionColumns[e].length]));
     const selected = M.filterRows(rows,state.filters,report.rankings?.cohorts);
     const heading = engine => positionColumns[engine].map((column,i) => {
@@ -247,7 +248,7 @@
     const records=[['Запрос','Направление','Поисковик','Дата','Позиция','Есть замер','Статус','URL','Источник']];
     for(const row of window.REPORT_OCTOBER_RANKINGS.rows.filter(r=>ids.has(r.id))) for(const engine of ['yandex','google']) {
       const raw=engine==='yandex'?row:row.google;
-      window.REPORT_OCTOBER_RANKINGS.dates.forEach((date,i)=>records.push([row.query,row.group,engine,date.date,raw.positions[i]??'',raw.available[i]?'1':'0',i===2?raw.status:!raw.available[i]?'missing':raw.positions[i]==null?'not_found':'found',raw.urls[i]||'',i===2?'XMLStock':'Topvisor']));
+      ['start','before','after'].forEach((role,i)=>records.push([row.query,row.group,engine,snapshotDate(view[role],engine),raw.positions[i]??'',raw.available[i]?'1':'0',i===2?raw.status:!raw.available[i]?'missing':raw.positions[i]==null?'not_found':'found',raw.urls[i]||'',i===2?'XMLStock':'Topvisor']));
     }
     const csv='\ufeff'+records.map(row=>row.map(value=>`"${String(value).replaceAll('"','""')}"`).join(';')).join('\r\n');
     const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='moscow-positions-2026-10.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
