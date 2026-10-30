@@ -20,6 +20,36 @@
   const state = {month:M.defaultMonth(data),tab:'results',detail:null,filters:{search:'',direction:'',trend:'all',cohort:'all'},limit:25,engine:'yandex'};
   let view = null, report = null, positionColumns = null, renderedMonth = null, currentDetail = null, lastOpener = null;
   const linkHTML = item => M.safeHref(item.url) ? `<a href="${esc(M.safeHref(item.url))}" target="_blank" rel="noopener noreferrer">${esc(item.label || item.url)}${icon('external')}</a>` : esc(item.label || 'Ссылка недоступна');
+  const imageViewer = document.createElement('dialog');
+  imageViewer.id = 'evidence-image-dialog';
+  imageViewer.className = 'moscow-image-viewer';
+  imageViewer.setAttribute('aria-labelledby','evidence-image-title');
+  imageViewer.innerHTML = '<header class="moscow-image-viewer__toolbar"><h2 id="evidence-image-title" class="sr-only">Просмотр изображения</h2><button id="evidence-image-close" class="moscow-image-viewer__close" type="button" aria-label="Закрыть изображение"><svg width="20" height="20" aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg><span>Закрыть</span></button></header><div class="moscow-image-viewer__body" tabindex="0"><img id="evidence-image-full" alt="" decoding="async"></div>';
+  dialog.append(imageViewer);
+  const imageFull = $('evidence-image-full'), imageClose = $('evidence-image-close');
+  let imageOpener = null, detailScrollBeforeImage = 0;
+  function closeImageViewer(restoreFocus = true) {
+    const opener = imageOpener;
+    imageOpener = null;
+    if (imageViewer.open) imageViewer.close();
+    imageFull.removeAttribute('src'); imageFull.alt = '';
+    if (restoreFocus && dialog.open && opener?.isConnected && $('detail-body').contains(opener)) {
+      $('detail-body').scrollTop = detailScrollBeforeImage;
+      opener.focus({preventScroll:true});
+    }
+  }
+  function openImageViewer(link) {
+    const source = M.safeImageHref(link.getAttribute('href'));
+    if (!source || !dialog.open) return false;
+    imageOpener = link;
+    detailScrollBeforeImage = $('detail-body').scrollTop;
+    imageFull.alt = link.querySelector('img')?.alt || '';
+    imageFull.src = source;
+    imageViewer.showModal();
+    imageViewer.querySelector('.moscow-image-viewer__body').scrollTop = 0;
+    imageClose.focus({preventScroll:true});
+    return true;
+  }
   function readRoute() {
     const url = new URL(location.href), month = url.searchParams.get('month'), tab = url.hash.slice(1);
     const legacyWork = tab.startsWith('work/') ? decodeURIComponent(tab.slice(5)) : null;
@@ -32,6 +62,7 @@
     url.hash = state.tab; return url;
   }
   function navigate(changes, {replace = false, focusTab = false} = {}) {
+    closeImageViewer(false);
     if (changes.month && changes.month !== state.month) { state.filters = {search:'',direction:'',trend:'all',cohort:'all'}; state.limit = 25; }
     Object.assign(state, changes);
     if (state.detail && (state.tab !== 'works' || !hasWorkDetails(state.month) || !M.getReport(data,state.month)?.works.some(w => w.id === state.detail))) state.detail = null;
@@ -195,6 +226,7 @@
   function renderDetail() {
     const work = state.tab === 'works' && hasWorkDetails(state.month) && report.works.find(w => w.id === state.detail);
     const key = work ? `${state.month}:${work.id}` : null;
+    if (!work || key !== currentDetail) closeImageViewer(false);
     if (!work) {
       if (dialog.open) { dialog.close(); document.body.classList.remove('dialog-open'); (lastOpener?.isConnected ? lastOpener : $('tab-' + state.tab)).focus({preventScroll:true}); }
       currentDetail = null; return;
@@ -241,7 +273,30 @@
     state.limit = 25; renderQueries();
   });
   $('close-detail').addEventListener('click',() => navigate({detail:null}));
-  dialog.addEventListener('cancel',event => { event.preventDefault(); navigate({detail:null}); });
+  $('detail-body').addEventListener('click',event => {
+    if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const link = event.target.closest('a[href]');
+    if (!link || !$('detail-body').contains(link) || !M.safeImageHref(link.getAttribute('href'))) return;
+    if (openImageViewer(link)) event.preventDefault();
+  });
+  imageClose.addEventListener('click',() => closeImageViewer());
+  imageViewer.addEventListener('cancel',event => { event.preventDefault(); event.stopPropagation(); closeImageViewer(); });
+  imageViewer.addEventListener('close',() => { if (!imageViewer.open) closeImageViewer(); });
+  imageViewer.addEventListener('click',event => {
+    if (event.target !== imageViewer) return;
+    const rect = imageViewer.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) closeImageViewer();
+  });
+  document.addEventListener('keydown',event => {
+    if (event.key !== 'Escape' || !imageViewer.open) return;
+    event.preventDefault(); event.stopImmediatePropagation(); closeImageViewer();
+  },true);
+  dialog.addEventListener('cancel',event => {
+    if (event.target !== dialog) return;
+    event.preventDefault();
+    if (imageViewer.open) { closeImageViewer(); return; }
+    navigate({detail:null});
+  });
   dialog.addEventListener('click',event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) navigate({detail:null}); } });
   function exportPositions() {
     const filtered=M.filterRows(queryPopulation(),state.filters,report.rankings.cohorts),ids=new Set(filtered.map(r=>r.id));

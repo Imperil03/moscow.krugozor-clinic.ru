@@ -6,7 +6,18 @@
 .evidence-block.comparison-screenshot{padding:16px}.evidence-block.comparison-screenshot img{width:auto;max-width:100%;height:auto;max-height:280px;object-fit:contain}.evidence-block.comparison-screenshot figcaption{font-size:13px;color:var(--muted);margin-top:10px}
 @media(min-width:1001px){.queries-card .table-filters:has(.cohort){grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.9fr)}.queries-card .table-filters .filter-field{min-width:0}.queries-card .table-filters input,.queries-card .table-filters select{width:100%;min-width:0}}
 
-/* Compact previews retain the full screenshot; the link opens the original. */
+/* Compact previews retain the full screenshot; ordinary clicks open the image dialog. */
 .comparison-screenshot>a{display:flex;align-items:center;justify-content:center}
 .comparison-grid.has-images .comparison-screenshot img{width:auto;max-width:100%;height:auto;max-height:260px;object-fit:contain}
 @media(max-width:600px){.comparison-grid.has-images .comparison-screenshot img{max-height:240px}}
+
+.moscow-image-viewer{position:fixed;inset:0;margin:auto;padding:0;border:0;border-radius:12px;width:min(1280px,calc(100vw - 32px));height:calc(100dvh - 32px);max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);overflow:hidden;background:var(--surface,#fff);color:var(--ink)}
+.moscow-image-viewer[open]{display:flex;flex-direction:column}
+.moscow-image-viewer::backdrop{background:rgb(23 32 57 / 68%)}
+.moscow-image-viewer__toolbar{display:flex;justify-content:flex-end;align-items:center;flex:0 0 auto;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface,#fff)}
+.moscow-image-viewer__close{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:44px;min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:9px;background:var(--surface,#fff);color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.moscow-image-viewer__close:hover{background:var(--accent-soft);color:var(--accent)}
+.moscow-image-viewer__close:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.moscow-image-viewer__body{flex:1 1 auto;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:16px;background:var(--page)}
+.moscow-image-viewer__body img{display:block;width:auto;max-width:100%;height:auto;margin:0 auto}
+@media(max-width:600px){.moscow-image-viewer{width:calc(100vw - 16px);height:calc(100dvh - 16px);max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);border-radius:9px}.moscow-image-viewer__toolbar{padding:8px}.moscow-image-viewer__body{padding:8px}}
