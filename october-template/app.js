@@ -17,6 +17,10 @@
   }[name] || ''}</svg>`;
   const tabs = ['results','works'], months = M.months(data), dialog = $('detail-dialog');
   const hasWorkDetails = month => month >= '2026-10';
+  function defaultTab(month) {
+    const selected = M.getReport(data, month);
+    return selected?.works.length && !selected.rankings && !selected.archive ? 'works' : 'results';
+  }
   const state = {month:M.defaultMonth(data),tab:'results',detail:null,filters:{search:'',direction:'',trend:'all',cohort:'all'},limit:25,engine:'yandex'};
   let view = null, report = null, positionColumns = null, renderedMonth = null, currentDetail = null, lastOpener = null;
   const linkHTML = item => M.safeHref(item.url) ? `<a href="${esc(M.safeHref(item.url))}" target="_blank" rel="noopener noreferrer">${esc(item.label || item.url)}${icon('external')}</a>` : esc(item.label || 'Ссылка недоступна');
@@ -51,9 +55,10 @@
     return true;
   }
   function readRoute() {
-    const url = new URL(location.href), month = url.searchParams.get('month'), tab = url.hash.slice(1);
+    const url = new URL(location.href), requestedMonth = url.searchParams.get('month'), tab = url.hash.slice(1);
+    const month = months.includes(requestedMonth) ? requestedMonth : M.defaultMonth(data);
     const legacyWork = tab.startsWith('work/') ? decodeURIComponent(tab.slice(5)) : null;
-    return {month:months.includes(month) ? month : M.defaultMonth(data), tab:legacyWork ? 'works' : tabs.includes(tab) ? tab : 'results', detail:url.searchParams.get('work') || legacyWork};
+    return {month, tab:legacyWork ? 'works' : tabs.includes(tab) ? tab : defaultTab(month), detail:url.searchParams.get('work') || legacyWork};
   }
   function routeURL() {
     const url = new URL(location.href);
@@ -250,7 +255,11 @@
   $('site-link').href = M.safeHref(data.project.website); $('site-link').innerHTML = esc(new URL(data.project.website).hostname) + icon('external');
   $('period-label').textContent = `${M.monthLabel(months[0])} — ${M.monthLabel(months.at(-1)).toLowerCase()}`;
   $('report-month').innerHTML = months.map(month => `<option value="${month}">${M.monthLabel(month)}</option>`).join('');
-  $('report-month').addEventListener('change',event => { navigate({month:event.target.value,detail:null}); $('announcement').textContent = `Выбран ${M.monthLabel(state.month)}.`; });
+  $('report-month').addEventListener('change',event => {
+    const month = event.target.value;
+    navigate({month,tab:defaultTab(month) === 'works' ? 'works' : state.tab,detail:null});
+    $('announcement').textContent = `Выбран ${M.monthLabel(state.month)}.`;
+  });
   tabs.forEach((tab,index) => {
     $('tab-' + tab).addEventListener('click',() => navigate({tab,detail:null}));
     $('tab-' + tab).addEventListener('keydown',event => {
