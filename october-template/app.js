@@ -206,9 +206,19 @@
   function worksHTML() {
     if (!report.works.length) return pendingHTML('works');
     const details = hasWorkDetails(state.month);
-    const compact = state.month === '2026-11';
-    if (compact) {
-      return `<div class="works-heading"><h2>Работы за ${M.monthLabel(state.month).toLowerCase()}</h2></div><section class="surface"><table class="works-table works-table-compact"><thead><tr><th scope="col">Что сделали</th><th scope="col">Результат</th><th scope="col">Подробнее</th></tr></thead><tbody>${report.works.map(work => `<tr><td><h3 class="work-name">${esc(work.title)}</h3></td><td class="work-summary">${esc(work.summary)}</td><td><button type="button" class="work-open" data-work="${esc(work.id)}" aria-label="Подробнее: ${esc(work.title)}">Подробнее${icon('arrow')}</button></td></tr>`).join('')}</tbody></table></section>`;
+    if (state.month === '2026-11') {
+      const groups = [
+        {id:'analysis', title:'Аналитика и подготовка'},
+        {id:'content', title:'Новые услуги и статьи'},
+        {id:'site', title:'Улучшения сайта'}
+      ];
+      const groupHTML = group => {
+        const items = report.works.filter(work => work.group === group.id);
+        if (!items.length) return '';
+        const rows = items.map(work => `<tr><td><h4 class="work-name">${esc(work.title)}</h4></td><td class="work-summary">${esc(work.summary)}</td><td class="work-action"><button type="button" class="work-open" data-work="${esc(work.id)}" aria-label="Подробнее: ${esc(work.title)}">Подробнее${icon('arrow')}</button></td></tr>`).join('');
+        return `<section class="works-group" aria-label="${esc(group.title)}"><h3 class="works-group-title">${esc(group.title)}</h3><div class="surface"><table class="works-table works-table-compact"><thead><tr><th scope="col">Работа</th><th scope="col">Что сделали</th><th scope="col">Подробнее</th></tr></thead><tbody>${rows}</tbody></table></div></section>`;
+      };
+      return `<div class="works-heading"><h2>Работы за ${M.monthLabel(state.month).toLowerCase()}</h2></div>${groups.map(groupHTML).join('')}`;
     }
     return `<div class="works-heading"><h2>Работы за ${M.monthLabel(state.month).toLowerCase()}</h2></div><section class="surface"><table class="works-table${details ? '' : ' without-details'}"><thead><tr><th scope="col">Что сделали</th><th scope="col">Краткое описание</th><th scope="col">Для чего это нужно</th>${details ? '<th scope="col">Подробнее</th>' : ''}</tr></thead><tbody>${report.works.map(work => `<tr><td><h3 class="work-name">${esc(work.title)}</h3></td><td class="work-summary">${esc(work.summary)}</td><td data-label="Для чего это нужно">${work.why ? paragraphsHTML(work.why) : '—'}</td>${details ? `<td><button type="button" class="work-open" data-work="${esc(work.id)}" aria-label="Подробнее: ${esc(work.title)}">Подробнее${icon('arrow')}</button></td>` : ''}</tr>`).join('')}</tbody></table></section>`;
   }
