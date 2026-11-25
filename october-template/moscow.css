@@ -21,3 +21,12 @@
 .moscow-image-viewer__body{flex:1 1 auto;min-height:0;min-width:0;overflow:auto;overscroll-behavior:contain;padding:16px;background:var(--page)}
 .moscow-image-viewer__body img{display:block;width:auto;max-width:100%;height:auto;margin:0 auto}
 @media(max-width:600px){.moscow-image-viewer{width:calc(100vw - 16px);height:calc(100dvh - 16px);max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);border-radius:9px}.moscow-image-viewer__toolbar{padding:8px}.moscow-image-viewer__body{padding:8px}}
+
+/* November 2026: compact, client-facing work table. */
+.works-table-compact th:first-child{width:34%}
+.works-table-compact th:nth-child(2){width:auto}
+.works-table-compact th:last-child{width:160px}
+.works-table-compact td{padding-top:23px;padding-bottom:23px}
+.works-table-compact td.work-summary{color:var(--muted)}
+@media(max-width:1100px){.works-table-compact tr{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr)}.works-table-compact td:last-child{grid-column:1/-1}}
+@media(max-width:700px){.works-table-compact tr{grid-template-columns:1fr}}
