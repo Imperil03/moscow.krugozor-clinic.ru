@@ -135,15 +135,17 @@
   }
   function periodLabel(period) {
     const format = day => new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',timeZone:'UTC'}).format(new Date(day + 'T12:00:00Z'));
-    const start = period.from.slice(0,7) === period.to.slice(0,7) ? Number(period.from.slice(-2)) : format(period.from);
-    return `${start}–${format(period.to)}`;
+    if (period.from === period.to) return format(period.to);
+    if (period.from.slice(0,7) === period.to.slice(0,7)) return `${Number(period.from.slice(-2))}–${format(period.to)}`;
+    return `${format(period.from)} — ${format(period.to)}`;
   }
   function weekHasForecast(week, traffic) {
     return !!traffic.forecastPeriod && week.to >= traffic.forecastPeriod.from;
   }
   function weekLabel(week,traffic) {
-    const range = `${dateLabel(week.from).slice(0,5)}–${dateLabel(week.to).slice(0,5)}`;
-    const breakdown = weekHasForecast(week,traffic) ? ` · факт ${number(week.actual)}, прогноз ${number(week.forecast)}` : '';
+    const start = dateLabel(week.from).slice(0,5);
+    const range = week.from === week.to ? start : `${start}–${dateLabel(week.to).slice(0,5)}`;
+    const breakdown = weekHasForecast(week,traffic) ? week.actual ? ` · факт ${number(week.actual)}, прогноз ${number(week.forecast)}` : ' · прогноз' : '';
     const visits = new Intl.PluralRules('ru').select(week.visits);
     return `${range} · ${number(week.visits)} ${{one:'визит',few:'визита'}[visits] || 'визитов'}${breakdown}`;
   }
@@ -156,17 +158,18 @@
     const intervals = Math.ceil(largest / step);
     const x = i => Number((left + (right-left) * i / Math.max(1,last)).toFixed(1));
     const y = value => Number((bottom - (bottom-top)*value/(step*intervals)).toFixed(1));
-    const firstForecast = weeks.findIndex(week => weekHasForecast(week,traffic));
-    const count = firstForecast < 0 ? weeks.length : firstForecast;
-    const point = (week,i) => `${x(i)},${y(week.visits)}`;
-    const observed = weeks.slice(0,count).map(point);
+    const series = weeks.map((week,i)=>({week,i}));
+    const actual = series.filter(({week})=>!weekHasForecast(week,traffic));
+    const predicted = series.filter(({week})=>weekHasForecast(week,traffic));
+    const point = ({week,i}) => `${x(i)},${y(week.visits)}`;
+    const observed = actual.map(point);
     const grid = Array.from({length:intervals+1},(_,i) => `<line class="weekly-gridline" x1="${left}" x2="${right}" y1="${y(step*i)}" y2="${y(step*i)}"/><text x="${left-7}" y="${y(step*i)+4}" text-anchor="end">${number(step*i)}</text>`).join('');
-    const area = count ? `<polygon class="weekly-area" points="${left},${bottom} ${observed.join(' ')} ${x(count-1)},${bottom}"/><polyline class="weekly-line" points="${observed.join(' ')}"/>` : '';
-    const projected = firstForecast < 0 ? '' : `<polyline class="weekly-line weekly-line-forecast" points="${weeks.map(point).slice(Math.max(0,count-1)).join(' ')}"/>`;
+    const area = actual.length ? `<polygon class="weekly-area" points="${x(actual[0].i)},${bottom} ${observed.join(' ')} ${x(actual.at(-1).i)},${bottom}"/><polyline class="weekly-line" points="${observed.join(' ')}"/>` : '';
+    const projected = predicted.length ? `<polyline class="weekly-line weekly-line-forecast" points="${[...actual.slice(-1),...predicted].map(point).join(' ')}"/>` : '';
     const dots = weeks.map((week,i) => `<g class="weekly-mark${weekHasForecast(week,traffic) ? ' is-forecast' : ''}${i === last ? ' is-current' : ''}" tabindex="${i === last ? 0 : -1}" data-visit-week="${i}" aria-label="${esc(weekLabel(week,traffic))}"><circle class="weekly-hit" cx="${x(i)}" cy="${y(week.visits)}" r="11"/><circle class="weekly-dot" cx="${x(i)}" cy="${y(week.visits)}" r="3.5"/></g>`).join('');
     const stride = Math.max(1,Math.ceil(last/(variant === 'mobile' ? 4 : 6)));
-    const labels = weeks.map((week,i) => i === last || i % stride === 0 && last-i >= stride/2 ? `<text x="${x(i)}" y="${height-10}" text-anchor="${i === 0 ? 'start' : i === last ? 'end' : 'middle'}">${dateLabel(week.from).slice(0,5)}</text>` : '').join('');
-    return `<svg class="weekly-chart weekly-chart-${variant}" viewBox="0 0 ${width} ${height}" role="group" aria-label="Визиты из поиска по неделям">${grid}${area}${projected}${labels}${dots}<text class="weekly-value${firstForecast < 0 ? '' : ' is-forecast'}" x="${right-1}" y="${y(weeks[last].visits)-11}" text-anchor="end">${number(weeks[last].visits)}</text></svg>`;
+    const labels = weeks.map((week,i) => i === last || i % stride === 0 && last-i >= stride/2 ? `<text x="${x(i)}" y="${height-10}" text-anchor="${i === 0 ? 'start' : i === last ? 'end' : 'middle'}">${dateLabel(i === last ? week.to : week.from).slice(0,5)}</text>` : '').join('');
+    return `<svg class="weekly-chart weekly-chart-${variant}" viewBox="0 0 ${width} ${height}" role="group" aria-label="Визиты из поиска по неделям">${grid}${area}${projected}${labels}${dots}</svg>`;
   }
   function trafficHTML(traffic) {
     if (!traffic?.weekly?.length) return '';
@@ -176,7 +179,9 @@
     const previous = comparisonPeriod ? `<span class="visits-before">${number(previousVisits)}</span>${icon('arrow','visits-arrow')}` : '';
     const lastWeek = weekly.at(-1);
     const estimate = forecastPeriod ? `<div class="visits-estimate"><p>${periodLabel(lastWeek)} · прогноз</p><strong>${number(lastWeek.visits)}</strong><span>визитов</span></div>` : '';
-    return `<section class="surface search-visits" aria-labelledby="search-visits-heading"><div class="visits-heading"><div><h3 id="search-visits-heading">Поисковый трафик</h3><p class="visits-period">${comparisonPeriod ? `${periodLabel(comparisonPeriod)} и ` : ''}${periodLabel(period)}</p><div class="visits-metric">${previous}<strong>${number(visits)}</strong>${delta}</div></div>${estimate}</div><figure class="weekly-figure"><div class="weekly-figure-heading"><figcaption>Визиты из поиска по неделям</figcaption><div class="weekly-legend"><span><i></i>Факт</span>${forecastPeriod ? '<span><i class="forecast-key"></i>Прогноз</span>' : ''}</div></div>${weeklyTrafficChart(traffic,'desktop',1000,236)}${weeklyTrafficChart(traffic,'mobile',320,196)}<p id="visits-readout" class="weekly-readout" aria-live="polite">${weekLabel(weekly.at(-1),traffic)}</p></figure></section>`;
+    const range = periodLabel({from:weekly[0].from,to:lastWeek.to});
+    const forecastKey = forecastPeriod ? `<span><i class="forecast-key"></i>Прогноз на ${periodLabel(forecastPeriod)}</span>` : '';
+    return `<section class="surface search-visits" aria-labelledby="search-visits-heading"><div class="visits-heading"><div><h3 id="search-visits-heading">Поисковый трафик</h3><p class="visits-period">${comparisonPeriod ? `${periodLabel(comparisonPeriod)} и ` : ''}${periodLabel(period)}</p><div class="visits-metric">${previous}<strong>${number(visits)}</strong>${delta}</div></div>${estimate}</div><figure class="weekly-figure"><div class="weekly-figure-heading"><figcaption>Визиты из поиска по неделям <span class="weekly-period">${range}</span></figcaption><div class="weekly-legend"><span><i></i>Факт</span>${forecastKey}</div></div>${weeklyTrafficChart(traffic,'desktop',1000,236)}${weeklyTrafficChart(traffic,'mobile',320,196)}<p id="visits-readout" class="weekly-readout" aria-live="polite">${weekLabel(lastWeek,traffic)}</p></figure></section>`;
   }
   function rankCell(value, archive = false, observation = {}) {
     if (observation.status === 'error') return '<span class="rank-missing rank-error" title="Проверка не завершилась. Это не потеря позиции.">Ошибка замера</span>';

@@ -28,6 +28,7 @@
 .weekly-figure{margin:19px 0 0;padding-top:14px;border-top:1px solid var(--line)}
 .weekly-figure-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px 14px}
 .weekly-figure figcaption{font-size:15px;font-weight:650}
+.weekly-period{display:inline-block;margin-left:8px;color:var(--muted);font-size:13px;font-weight:400}
 .weekly-legend{display:flex;gap:16px;color:var(--muted);font-size:13px}
 .weekly-legend span{display:flex;align-items:center;gap:7px}
 .weekly-legend i{width:17px;border-top:2px solid var(--visits-line)}
@@ -35,8 +36,6 @@
 .weekly-chart{display:block;width:100%;height:auto;color:var(--muted);fill:none;stroke:none;overflow:visible}
 .weekly-chart-mobile{display:none}
 .weekly-chart text{fill:currentColor;stroke:none;font-size:11px;font-variant-numeric:tabular-nums;pointer-events:none}
-.weekly-chart .weekly-value{fill:var(--visits-line);font-weight:650}
-.weekly-chart .weekly-value.is-forecast{fill:var(--visits-forecast)}
 .weekly-gridline{stroke:var(--line);stroke-width:1;vector-effect:non-scaling-stroke}
 .weekly-area{fill:var(--visits-line);stroke:none;fill-opacity:.075}
 .weekly-line{fill:none;stroke:var(--visits-line);stroke-width:2.3;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
@@ -81,7 +80,6 @@
   .visibility-engine+.visibility-engine{border-left:0;border-top:1px solid var(--line);padding:15px 0 0}
   .weekly-chart-desktop{display:none}
   .weekly-chart-mobile{display:block}
-  .weekly-chart-mobile .weekly-value{display:none}
   .visits-heading h3{font-size:19px}
   .visits-before{font-size:20px}
   .visits-metric strong{font-size:28px}
@@ -98,6 +96,7 @@
   .visibility-current strong{font-size:21px}
   .visibility-share{margin-left:5px}
   .weekly-figure-heading figcaption{font-size:13px}
+  .weekly-period{display:block;margin-left:0;font-size:12px}
   .weekly-legend{font-size:12px;gap:9px}
   .weekly-readout{font-size:12px}
 }

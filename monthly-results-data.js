@@ -477,8 +477,17 @@ window.REPORT_MONTHLY_RESULTS = {
       "forecastVisits": 550,
       "weekly": [
         {
+          "from": "2026-09-28",
+          "to": "2026-10-04",
+          "days": 7,
+          "visits": 2233,
+          "actual": 2233,
+          "forecast": 0
+        },
+        {
           "from": "2026-10-05",
           "to": "2026-10-11",
+          "days": 7,
           "visits": 2169,
           "actual": 2169,
           "forecast": 0
@@ -486,6 +495,7 @@ window.REPORT_MONTHLY_RESULTS = {
         {
           "from": "2026-10-12",
           "to": "2026-10-18",
+          "days": 7,
           "visits": 1846,
           "actual": 1846,
           "forecast": 0
@@ -493,6 +503,7 @@ window.REPORT_MONTHLY_RESULTS = {
         {
           "from": "2026-10-19",
           "to": "2026-10-25",
+          "days": 7,
           "visits": 1919,
           "actual": 1919,
           "forecast": 0
@@ -500,6 +511,7 @@ window.REPORT_MONTHLY_RESULTS = {
         {
           "from": "2026-10-26",
           "to": "2026-11-01",
+          "days": 7,
           "visits": 2255,
           "actual": 2255,
           "forecast": 0
@@ -507,6 +519,7 @@ window.REPORT_MONTHLY_RESULTS = {
         {
           "from": "2026-11-02",
           "to": "2026-11-08",
+          "days": 7,
           "visits": 2411,
           "actual": 2411,
           "forecast": 0
@@ -514,6 +527,7 @@ window.REPORT_MONTHLY_RESULTS = {
         {
           "from": "2026-11-09",
           "to": "2026-11-15",
+          "days": 7,
           "visits": 2264,
           "actual": 2264,
           "forecast": 0
@@ -521,6 +535,7 @@ window.REPORT_MONTHLY_RESULTS = {
         {
           "from": "2026-11-16",
           "to": "2026-11-22",
+          "days": 7,
           "visits": 2331,
           "actual": 2331,
           "forecast": 0
@@ -528,6 +543,7 @@ window.REPORT_MONTHLY_RESULTS = {
         {
           "from": "2026-11-23",
           "to": "2026-11-29",
+          "days": 7,
           "visits": 2450,
           "actual": 1900,
           "forecast": 550
