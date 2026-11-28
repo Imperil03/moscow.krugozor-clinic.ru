@@ -57,20 +57,36 @@
 .visibility-engine h4{font-size:17px;font-weight:650;line-height:1.35;margin:0 0 9px}
 .visibility-yandex h4{color:#a93021}
 .visibility-google h4{color:#1b5fbc}
-.visibility-metrics{width:100%;border-collapse:collapse;table-layout:fixed;font-variant-numeric:tabular-nums}
+.visibility-metrics{
+  --visibility-share-width:40px;
+  --visibility-share-gap:6px;
+  --visibility-share-space:calc(var(--visibility-share-width) + var(--visibility-share-gap));
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+  font-variant-numeric:tabular-nums;
+}
 .visibility-metrics th,.visibility-metrics td{padding:8px 0;text-align:right;vertical-align:baseline;line-height:1.25;white-space:nowrap}
 .visibility-metrics thead th{font-size:13px;color:var(--muted);font-weight:550;border-bottom:1px solid var(--line)}
 .visibility-metrics th:first-child{width:23%;text-align:left}
 .visibility-metrics thead th:nth-child(2){width:17%}
-.visibility-metrics thead th:nth-child(3){width:37%}
+.visibility-metrics thead th:nth-child(3){width:37%;padding-inline-end:var(--visibility-share-space)}
 .visibility-metrics tbody tr+tr{border-top:1px solid var(--line)}
 .visibility-metrics tbody th{font-size:15px;font-weight:600}
 .visibility-before{color:var(--muted);font-size:19px}
 .visibility-current strong{font-size:23px;letter-spacing:-.025em;font-weight:700}
-.visibility-share{color:var(--muted);font-size:12px;margin-left:7px}
+.visibility-current strong:only-child{margin-inline-end:var(--visibility-share-space)}
+.visibility-metrics tr:has(.visibility-change.positive) .visibility-current strong{color:var(--positive)}
+.visibility-metrics tr:has(.visibility-change.negative) .visibility-current strong{color:var(--negative)}
+.visibility-share{
+  display:inline-block;
+  width:var(--visibility-share-width);
+  margin-inline-start:var(--visibility-share-gap);
+  color:var(--muted);
+  font-size:12px;
+  text-align:right;
+}
 .visibility-change{color:var(--muted);font-size:15px;font-weight:650}
-.visibility-change.positive{color:var(--positive)}
-.visibility-change.negative{color:var(--negative)}
 @media(max-width:720px){
   .monthly-results .search-visits{padding:18px 16px 14px;margin-bottom:18px}
   .monthly-results .visibility-summary{padding:18px 16px;margin-bottom:18px}
@@ -94,7 +110,6 @@
   .visits-metric{gap:6px}
   .visibility-before{font-size:17px}
   .visibility-current strong{font-size:21px}
-  .visibility-share{margin-left:5px}
   .weekly-figure-heading figcaption{font-size:13px}
   .weekly-period{display:block;margin-left:0;font-size:12px}
   .weekly-legend{font-size:12px;gap:9px}
