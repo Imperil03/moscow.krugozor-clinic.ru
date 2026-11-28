@@ -89,15 +89,30 @@
     if (!stats?.total) return `<div class="engine-kpi-metric"><h4>Топ-${top}</h4><p class="no-metric">Нет данных</p></div>`;
     const after = metric.after / stats.total * 100, before = metric.before === null ? null : metric.before / stats.total * 100;
     const trend = before === null || after === before ? 'neutral' : after > before ? 'positive' : 'negative';
-    const scale = Math.max(1, ...M.ENGINES.flatMap(e => [view.stats[e].top10.before, view.stats[e].top10.after]));
-    const bars = report.resultLayout === 'monthly' && before !== null ? `<div class="kpi-comparison-bars" aria-hidden="true"><span style="--length:${metric.before / scale * 100}%"></span><span style="--length:${metric.after / scale * 100}%"></span></div>` : '';
-    return `<div class="engine-kpi-metric"><h4>Топ-${top}</h4><div class="kpi-values">${before === null ? '' : `<div><span class="kpi-period">Было</span><span class="number before">${number(metric.before)}</span></div>${icon('arrow','kpi-arrow')}`}<div>${before === null ? '' : '<span class="kpi-period">Стало</span>'}<span class="number ${trend}">${number(metric.after)}</span></div></div><p class="kpi-count">из ${number(stats.total)} запросов · ${number(after)}%</p>${bars}</div>`;
+    return `<div class="engine-kpi-metric"><h4>Топ-${top}</h4><div class="kpi-values">${before === null ? '' : `<div><span class="kpi-period">Было</span><span class="number before">${number(metric.before)}</span></div>${icon('arrow','kpi-arrow')}`}<div>${before === null ? '' : '<span class="kpi-period">Стало</span>'}<span class="number ${trend}">${number(metric.after)}</span></div></div><p class="kpi-count">из ${number(stats.total)} запросов · ${number(after)}%</p></div>`;
   }
   function engineKpisHTML() {
     return `<div class="engine-kpi-grid">${M.ENGINES.map(engine => `<section class="engine-kpi-card surface engine-${engine}" aria-labelledby="kpi-heading-${engine}"><h3 class="searcher-name" id="kpi-heading-${engine}">${engine === 'yandex' ? 'Яндекс' : 'Google'}</h3><div class="engine-kpi-metrics">${[10,3].map(top => kpiHTML(engine,top)).join('')}</div></section>`).join('')}</div>`;
   }
   function rankSummaryHTML() {
-    return engineKpisHTML() + (report.resultLayout === 'monthly' ? '' : rankCharts());
+    return report.resultLayout === 'monthly' ? visibilityHTML() : engineKpisHTML() + rankCharts();
+  }
+  function visibilityHTML() {
+    const stats = view.stats;
+    const total = stats.yandex.total;
+    const engines = M.ENGINES.map(engine => {
+      const name = engine === 'yandex' ? 'Яндекс' : 'Google';
+      const metrics = [10,3].map(top => {
+        const {before,after} = stats[engine]['top'+top];
+        const change = before === null ? null : after - before;
+        const sign = change > 0 ? '+' : change < 0 ? '−' : '';
+        const mood = change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral';
+        const share = total ? `<span class="visibility-share">${number(after / total * 100)}%</span>` : '';
+        return `<tr><th scope="row">Топ-${top}</th><td class="visibility-before">${before === null ? '—' : number(before)}</td><td class="visibility-current"><strong>${total ? number(after) : '—'}</strong>${share}</td><td class="visibility-change ${mood}">${change === null ? '—' : sign + number(Math.abs(change))}</td></tr>`;
+      }).join('');
+      return `<section class="visibility-engine visibility-${engine}" aria-labelledby="visibility-${engine}"><h4 id="visibility-${engine}">${name}</h4><table class="visibility-metrics"><thead><tr><th scope="col"><span class="sr-only">Позиции</span></th><th scope="col">Было</th><th scope="col">Стало</th><th scope="col">Разница</th></tr></thead><tbody>${metrics}</tbody></table></section>`;
+    }).join('');
+    return `<section class="visibility-summary surface" aria-labelledby="visibility-heading"><div class="visibility-heading"><h3 id="visibility-heading">Запросы в топе</h3><p>Запросов в сравнении — ${number(total)}</p></div><div class="visibility-engines">${engines}</div></section>`;
   }
   function rankCharts() {
     const archive = report.archive;
@@ -135,14 +150,17 @@
   function weeklyTrafficChart(traffic,variant,width,height) {
     const weeks = traffic.weekly, last = weeks.length - 1;
     const left = 38, right = width - 15, top = 25, bottom = height - 32;
-    const step = Math.ceil(Math.max(1, ...weeks.map(week => week.visits)) / 40) * 10;
+    const largest = Math.max(5, ...weeks.map(week => week.visits));
+    const unit = 10 ** Math.floor(Math.log10(largest / 5));
+    const step = [1,2,2.5,5,10].map(value=>value*unit).find(value=>value>=largest/5);
+    const intervals = Math.ceil(largest / step);
     const x = i => Number((left + (right-left) * i / Math.max(1,last)).toFixed(1));
-    const y = value => Number((bottom - (bottom-top)*value/(step*4)).toFixed(1));
+    const y = value => Number((bottom - (bottom-top)*value/(step*intervals)).toFixed(1));
     const firstForecast = weeks.findIndex(week => weekHasForecast(week,traffic));
     const count = firstForecast < 0 ? weeks.length : firstForecast;
     const point = (week,i) => `${x(i)},${y(week.visits)}`;
     const observed = weeks.slice(0,count).map(point);
-    const grid = Array.from({length:5},(_,i) => `<line class="weekly-gridline" x1="${left}" x2="${right}" y1="${y(step*i)}" y2="${y(step*i)}"/><text x="${left-7}" y="${y(step*i)+4}" text-anchor="end">${number(step*i)}</text>`).join('');
+    const grid = Array.from({length:intervals+1},(_,i) => `<line class="weekly-gridline" x1="${left}" x2="${right}" y1="${y(step*i)}" y2="${y(step*i)}"/><text x="${left-7}" y="${y(step*i)+4}" text-anchor="end">${number(step*i)}</text>`).join('');
     const area = count ? `<polygon class="weekly-area" points="${left},${bottom} ${observed.join(' ')} ${x(count-1)},${bottom}"/><polyline class="weekly-line" points="${observed.join(' ')}"/>` : '';
     const projected = firstForecast < 0 ? '' : `<polyline class="weekly-line weekly-line-forecast" points="${weeks.map(point).slice(Math.max(0,count-1)).join(' ')}"/>`;
     const dots = weeks.map((week,i) => `<g class="weekly-mark${weekHasForecast(week,traffic) ? ' is-forecast' : ''}${i === last ? ' is-current' : ''}" tabindex="${i === last ? 0 : -1}" data-visit-week="${i}" aria-label="${esc(weekLabel(week,traffic))}"><circle class="weekly-hit" cx="${x(i)}" cy="${y(week.visits)}" r="11"/><circle class="weekly-dot" cx="${x(i)}" cy="${y(week.visits)}" r="3.5"/></g>`).join('');
@@ -152,11 +170,12 @@
   }
   function trafficHTML(traffic) {
     if (!traffic?.weekly?.length) return '';
-    const {visits,previousVisits,forecastVisits,forecastPeriod,period,comparisonPeriod,weekly} = traffic;
+    const {visits,previousVisits,forecastPeriod,period,comparisonPeriod,weekly} = traffic;
     const change = previousVisits ? Math.round((visits-previousVisits)/previousVisits*1000)/10 : null;
     const delta = Number.isFinite(change) && change !== 0 ? `<span class="visits-change ${change > 0 ? 'positive' : 'negative'}">${change > 0 ? '+' : '−'}${number(Math.abs(change))}%</span>` : '';
     const previous = comparisonPeriod ? `<span class="visits-before">${number(previousVisits)}</span>${icon('arrow','visits-arrow')}` : '';
-    const estimate = forecastPeriod ? `<div class="visits-estimate"><p>Прогноз за месяц</p><strong>${number(visits+forecastVisits)}</strong><span>визитов</span></div>` : '';
+    const lastWeek = weekly.at(-1);
+    const estimate = forecastPeriod ? `<div class="visits-estimate"><p>${periodLabel(lastWeek)} · прогноз</p><strong>${number(lastWeek.visits)}</strong><span>визитов</span></div>` : '';
     return `<section class="surface search-visits" aria-labelledby="search-visits-heading"><div class="visits-heading"><div><h3 id="search-visits-heading">Поисковый трафик</h3><p class="visits-period">${comparisonPeriod ? `${periodLabel(comparisonPeriod)} и ` : ''}${periodLabel(period)}</p><div class="visits-metric">${previous}<strong>${number(visits)}</strong>${delta}</div></div>${estimate}</div><figure class="weekly-figure"><div class="weekly-figure-heading"><figcaption>Визиты из поиска по неделям</figcaption><div class="weekly-legend"><span><i></i>Факт</span>${forecastPeriod ? '<span><i class="forecast-key"></i>Прогноз</span>' : ''}</div></div>${weeklyTrafficChart(traffic,'desktop',1000,236)}${weeklyTrafficChart(traffic,'mobile',320,196)}<p id="visits-readout" class="weekly-readout" aria-live="polite">${weekLabel(weekly.at(-1),traffic)}</p></figure></section>`;
   }
   function rankCell(value, archive = false, observation = {}) {
@@ -202,7 +221,8 @@
     const cohorts = report.rankings?.cohorts || [], downloads = report.rankings?.downloads || [];
     const cohortFilter = cohorts.length ? `<div class="filter-field cohort"><label for="cohort-filter">Выборка запросов</label><div class="select-wrap"><select id="cohort-filter"><option value="all">Все ${rows.length} запросов</option>${cohorts.filter(c => c.id !== 'all').map(c => `<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('')}${!archive && view.newRows.length ? `<option value="new">Новые запросы (${view.newRows.length})</option>` : ''}</select>${icon('chevron')}</div></div>` : '';
     const legend = `<div class="rank-legend" aria-label="Обозначения текущих позиций"><span>Текущие позиции:</span><span><i class="rank-key rank-top3" aria-hidden="true"></i>Топ-3</span><span><i class="rank-key rank-top10" aria-hidden="true"></i>4–10</span><span><i class="rank-key rank-top30" aria-hidden="true"></i>11–30</span><span><i class="rank-key rank-other" aria-hidden="true"></i>31 и ниже</span></div>`;
-    return `<section class="queries-card surface"><div class="section-heading"><h2>Позиции запросов</h2><div class="ranking-downloads"><button id="export-positions" class="button-secondary" type="button">Скачать позиции</button></div></div><div class="table-filters"><div class="filter-field search"><label for="query-search">Найти запрос</label><input id="query-search" type="search" placeholder="Например, подбор контактных линз" value="${esc(state.filters.search)}"></div>${cohortFilter}<div class="filter-field direction"><label for="direction-filter">Направление</label><div class="select-wrap"><select id="direction-filter"><option value="">Все направления</option>${directions.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('')}</select>${icon('chevron')}</div></div>${!archive && view.before ? `<div class="filter-field trend"><label for="trend-filter">Динамика за месяц</label><div class="select-wrap"><select id="trend-filter">${[['all','Все изменения'],['up','Рост'],['down','Снижение'],['same','Без изменений']].map(([v,label]) => `<option value="${v}">${label}</option>`).join('')}</select>${icon('chevron')}</div></div>` : ''}</div>${legend}<div class="mobile-engine" role="group" aria-label="Поисковик в таблице"><button type="button" data-engine="yandex" aria-pressed="${state.engine === 'yandex'}">Яндекс</button><button type="button" data-engine="google" aria-pressed="${state.engine === 'google'}">Google</button></div><p class="table-scroll-hint">Проведите по таблице влево, чтобы увидеть текущие позиции.</p><div class="table-scroll" id="positions-wrap" data-engine="${state.engine}" role="region" tabindex="0" aria-label="Позиции запросов"><table class="positions-table snapshot-positions" style="--rank-columns:${counts.yandex + counts.google};--yandex-columns:${counts.yandex};--google-columns:${counts.google}"><caption class="sr-only">Позиции запросов за ${esc(M.monthLabel(state.month).toLowerCase())}</caption><colgroup><col class="query-col">${columns}</colgroup><thead><tr><th id="query-heading" rowspan="2" scope="col" class="query-heading">Запрос</th><th id="engine-yandex" colspan="${counts.yandex}" scope="colgroup" class="engine-yandex engine-title engine-start">Яндекс</th><th id="engine-google" colspan="${counts.google}" scope="colgroup" class="engine-google engine-title engine-start">Google</th></tr><tr>${M.ENGINES.map(heading).join('')}</tr></thead><tbody id="query-rows"></tbody></table></div><p id="query-empty" class="query-empty" hidden>Запросы не найдены. Измените поиск или фильтры.</p><div class="table-footer"><span id="query-count" role="status" aria-live="polite"></span><button type="button" class="button-secondary" id="show-more">Показать ещё 25</button></div></section>`;
+    const download = report.resultLayout === 'monthly' ? '' : '<div class="ranking-downloads"><button id="export-positions" class="button-secondary" type="button">Скачать позиции</button></div>';
+    return `<section class="queries-card surface"><div class="section-heading"><h2>Позиции запросов</h2>${download}</div><div class="table-filters"><div class="filter-field search"><label for="query-search">Найти запрос</label><input id="query-search" type="search" placeholder="Например, подбор контактных линз" value="${esc(state.filters.search)}"></div>${cohortFilter}<div class="filter-field direction"><label for="direction-filter">Направление</label><div class="select-wrap"><select id="direction-filter"><option value="">Все направления</option>${directions.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('')}</select>${icon('chevron')}</div></div>${!archive && view.before ? `<div class="filter-field trend"><label for="trend-filter">Динамика за месяц</label><div class="select-wrap"><select id="trend-filter">${[['all','Все изменения'],['up','Рост'],['down','Снижение'],['same','Без изменений']].map(([v,label]) => `<option value="${v}">${label}</option>`).join('')}</select>${icon('chevron')}</div></div>` : ''}</div>${legend}<div class="mobile-engine" role="group" aria-label="Поисковик в таблице"><button type="button" data-engine="yandex" aria-pressed="${state.engine === 'yandex'}">Яндекс</button><button type="button" data-engine="google" aria-pressed="${state.engine === 'google'}">Google</button></div><p class="table-scroll-hint">Проведите по таблице влево, чтобы увидеть текущие позиции.</p><div class="table-scroll" id="positions-wrap" data-engine="${state.engine}" role="region" tabindex="0" aria-label="Позиции запросов"><table class="positions-table snapshot-positions" style="--rank-columns:${counts.yandex + counts.google};--yandex-columns:${counts.yandex};--google-columns:${counts.google}"><caption class="sr-only">Позиции запросов за ${esc(M.monthLabel(state.month).toLowerCase())}</caption><colgroup><col class="query-col">${columns}</colgroup><thead><tr><th id="query-heading" rowspan="2" scope="col" class="query-heading">Запрос</th><th id="engine-yandex" colspan="${counts.yandex}" scope="colgroup" class="engine-yandex engine-title engine-start">Яндекс</th><th id="engine-google" colspan="${counts.google}" scope="colgroup" class="engine-google engine-title engine-start">Google</th></tr><tr>${M.ENGINES.map(heading).join('')}</tr></thead><tbody id="query-rows"></tbody></table></div><p id="query-empty" class="query-empty" hidden>Запросы не найдены. Измените поиск или фильтры.</p><div class="table-footer"><span id="query-count" role="status" aria-live="polite"></span><button type="button" class="button-secondary" id="show-more">Показать ещё 25</button></div></section>`;
   }
   function renderQueries() {
     if (!$('query-rows')) return;
@@ -357,12 +377,7 @@
   dialog.addEventListener('click',event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) navigate({detail:null}); } });
   function exportPositions() {
     const filtered=M.filterRows(queryPopulation(),state.filters,report.rankings.cohorts);
-    const records=report.resultLayout === 'monthly' ? (()=>{
-      const columns=M.ENGINES.flatMap(engine=>positionColumns[engine].map(column=>({engine,...column})));
-      const label = {yandex:'Яндекс',google:'Google'};
-      return [ ['Запрос','Направление',...columns.map(c=>`${label[c.engine]} ${dateLabel(c.date)}`)],
-        ...filtered.map(row=>[row.query,row.direction,...columns.map(c=>row[c.engine][c.key]??101)]) ];
-    })() : octoberPositionRecords(filtered);
+    const records=octoberPositionRecords(filtered);
     const csv='\ufeff'+records.map(row=>row.map(value=>`"${String(value).replaceAll('"','""')}"`).join(';')).join('\r\n');
     const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=`moscow-positions-${state.month}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }

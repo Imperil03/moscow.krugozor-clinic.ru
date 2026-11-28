@@ -49,17 +49,36 @@
 .weekly-mark:focus-visible{outline:none}
 .weekly-mark:focus-visible .weekly-hit{stroke:var(--mark-color);stroke-width:1.5}
 .weekly-readout{margin:0;color:var(--muted);font-size:13px;min-height:21px;line-height:1.55}
-.monthly-results .engine-kpi-grid{margin-bottom:28px;gap:22px}
-.monthly-results .engine-kpi-card{padding:23px 28px}
-.monthly-results .engine-kpi-card .searcher-name{margin-bottom:16px}
-.kpi-comparison-bars{display:grid;gap:4px;margin-top:10px;max-width:220px}
-.kpi-comparison-bars span{display:block;height:3px;width:var(--length);border-radius:3px;background:#b0b8ca}
-.kpi-comparison-bars span+span{background:var(--accent)}
+.monthly-results .visibility-summary{padding:24px 30px;margin-bottom:26px}
+.visibility-heading{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px 16px;margin-bottom:20px}
+.visibility-heading h3{font-size:22px;line-height:1.35;letter-spacing:-.02em;margin:0}
+.visibility-heading p{margin:0;color:var(--muted);font-size:13px}
+.visibility-engines{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}
+.visibility-engine+.visibility-engine{border-left:1px solid var(--line);padding-left:28px}
+.visibility-engine h4{font-size:17px;font-weight:650;line-height:1.35;margin:0 0 9px}
+.visibility-yandex h4{color:#a93021}
+.visibility-google h4{color:#1b5fbc}
+.visibility-metrics{width:100%;border-collapse:collapse;table-layout:fixed;font-variant-numeric:tabular-nums}
+.visibility-metrics th,.visibility-metrics td{padding:8px 0;text-align:right;vertical-align:baseline;line-height:1.25;white-space:nowrap}
+.visibility-metrics thead th{font-size:13px;color:var(--muted);font-weight:550;border-bottom:1px solid var(--line)}
+.visibility-metrics th:first-child{width:23%;text-align:left}
+.visibility-metrics thead th:nth-child(2){width:17%}
+.visibility-metrics thead th:nth-child(3){width:37%}
+.visibility-metrics tbody tr+tr{border-top:1px solid var(--line)}
+.visibility-metrics tbody th{font-size:15px;font-weight:600}
+.visibility-before{color:var(--muted);font-size:19px}
+.visibility-current strong{font-size:23px;letter-spacing:-.025em;font-weight:700}
+.visibility-share{color:var(--muted);font-size:12px;margin-left:7px}
+.visibility-change{color:var(--muted);font-size:15px;font-weight:650}
+.visibility-change.positive{color:var(--positive)}
+.visibility-change.negative{color:var(--negative)}
 @media(max-width:720px){
   .monthly-results .search-visits{padding:18px 16px 14px;margin-bottom:18px}
-  .monthly-results .engine-kpi-grid{gap:14px;margin-bottom:20px}
-  .monthly-results .engine-kpi-card{padding:16px 18px}
-  .monthly-results .engine-kpi-card .searcher-name{margin-bottom:10px}
+  .monthly-results .visibility-summary{padding:18px 16px;margin-bottom:18px}
+  .visibility-heading{margin-bottom:15px}
+  .visibility-heading h3{font-size:19px}
+  .visibility-engines{grid-template-columns:1fr;gap:15px}
+  .visibility-engine+.visibility-engine{border-left:0;border-top:1px solid var(--line);padding:15px 0 0}
   .weekly-chart-desktop{display:none}
   .weekly-chart-mobile{display:block}
   .weekly-chart-mobile .weekly-value{display:none}
@@ -70,9 +89,14 @@
   .visits-estimate p,.visits-estimate span{font-size:12px}
 }
 @media(max-width:420px){
-  .visits-heading{gap:12px;align-items:flex-start}
+  .visits-heading{display:grid;grid-template-columns:1fr;gap:10px}
+  .visits-estimate{display:flex;align-items:baseline;gap:4px;text-align:left}
+  .visits-estimate p{margin:0 auto 0 0}
   .visits-period{font-size:12px}
   .visits-metric{gap:6px}
+  .visibility-before{font-size:17px}
+  .visibility-current strong{font-size:21px}
+  .visibility-share{margin-left:5px}
   .weekly-figure-heading figcaption{font-size:13px}
   .weekly-legend{font-size:12px;gap:9px}
   .weekly-readout{font-size:12px}
