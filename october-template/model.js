@@ -201,9 +201,16 @@
         const traffic = report.traffic;
         check(Number.isInteger(traffic.visits) && traffic.visits >= 0, `${label}: неверное число визитов.`);
         if (own(traffic,'previousVisits')) check(Number.isInteger(traffic.previousVisits) && traffic.previousVisits >= 0, `${label}: неверное сравнение трафика.`);
-        for (const period of [traffic.period,traffic.comparisonPeriod].filter(Boolean)) check(validDate(period.from) && validDate(period.to) && period.from <= period.to, `${label}: неверный период трафика.`);
+        for (const period of [traffic.period,traffic.comparisonPeriod,traffic.forecastPeriod].filter(Boolean)) check(validDate(period.from) && validDate(period.to) && period.from <= period.to, `${label}: неверный период трафика.`);
         for (const engine of Object.values(traffic.engines || {})) check(['current','previous'].every(key => Number.isInteger(engine[key]) && engine[key] >= 0), `${label}: неверный трафик поисковика.`);
-        for (const week of traffic.weekly || []) check(validDate(week.from) && validDate(week.to) && week.from <= week.to && ['visits','google','yandex','other'].every(key => Number.isInteger(week[key]) && week[key] >= 0), `${label}: неверная неделя трафика.`);
+        if (own(traffic,'forecastVisits')) check(Number.isInteger(traffic.forecastVisits) && traffic.forecastVisits >= 0, `${label}: неверный прогноз трафика.`);
+        for (const week of traffic.weekly || []) {
+          const summed = report.resultLayout === 'monthly';
+          const fields = summed ? ['visits','actual','forecast'] : ['visits','google','yandex','other'];
+          check(validDate(week.from) && validDate(week.to) && week.from <= week.to &&
+            fields.every(key => Number.isInteger(week[key]) && week[key] >= 0) &&
+            (!summed || week.visits === week.actual + week.forecast), `${label}: неверная неделя трафика.`);
+        }
       }
       check(Array.isArray(report.works), `${label}: отсутствует список работ.`);
       check(new Set((report.works || []).map(w => w.id)).size === report.works?.length, `${label}: повторные работы.`);

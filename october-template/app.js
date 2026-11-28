@@ -89,10 +89,15 @@
     if (!stats?.total) return `<div class="engine-kpi-metric"><h4>Топ-${top}</h4><p class="no-metric">Нет данных</p></div>`;
     const after = metric.after / stats.total * 100, before = metric.before === null ? null : metric.before / stats.total * 100;
     const trend = before === null || after === before ? 'neutral' : after > before ? 'positive' : 'negative';
-    return `<div class="engine-kpi-metric"><h4>Топ-${top}</h4><div class="kpi-values">${before === null ? '' : `<div><span class="kpi-period">Было</span><span class="number before">${number(metric.before)}</span></div>${icon('arrow','kpi-arrow')}`}<div>${before === null ? '' : '<span class="kpi-period">Стало</span>'}<span class="number ${trend}">${number(metric.after)}</span></div></div><p class="kpi-count">из ${number(stats.total)} запросов · ${number(after)}%</p></div>`;
+    const scale = Math.max(1, ...M.ENGINES.flatMap(e => [view.stats[e].top10.before, view.stats[e].top10.after]));
+    const bars = report.resultLayout === 'monthly' && before !== null ? `<div class="kpi-comparison-bars" aria-hidden="true"><span style="--length:${metric.before / scale * 100}%"></span><span style="--length:${metric.after / scale * 100}%"></span></div>` : '';
+    return `<div class="engine-kpi-metric"><h4>Топ-${top}</h4><div class="kpi-values">${before === null ? '' : `<div><span class="kpi-period">Было</span><span class="number before">${number(metric.before)}</span></div>${icon('arrow','kpi-arrow')}`}<div>${before === null ? '' : '<span class="kpi-period">Стало</span>'}<span class="number ${trend}">${number(metric.after)}</span></div></div><p class="kpi-count">из ${number(stats.total)} запросов · ${number(after)}%</p>${bars}</div>`;
   }
   function engineKpisHTML() {
     return `<div class="engine-kpi-grid">${M.ENGINES.map(engine => `<section class="engine-kpi-card surface engine-${engine}" aria-labelledby="kpi-heading-${engine}"><h3 class="searcher-name" id="kpi-heading-${engine}">${engine === 'yandex' ? 'Яндекс' : 'Google'}</h3><div class="engine-kpi-metrics">${[10,3].map(top => kpiHTML(engine,top)).join('')}</div></section>`).join('')}</div>`;
+  }
+  function rankSummaryHTML() {
+    return engineKpisHTML() + (report.resultLayout === 'monthly' ? '' : rankCharts());
   }
   function rankCharts() {
     const archive = report.archive;
@@ -113,19 +118,46 @@
       return `<section class="ranking-chart surface" aria-label="${name}: ${archive ? 'доли запросов по архивной сводке' : 'количество запросов'}"><h3>${name}</h3>${archive ? '<p class="archive-chart-note">Доли запросов по сводке архивного отчёта</p>' : ''}<div class="rank-bars">${bars}</div><div class="chart-legend">${comparable ? `<span><i class="before-key"></i>Было${archive ? '' : ' · ' + dateLabel(snapshotDate(view.before,engine))}</span>` : ''}<span><i></i>${comparable ? 'Стало' : 'Сейчас'}${archive ? '' : ' · ' + dateLabel(snapshotDate(view.after,engine))}</span></div></section>`;
     }).join('')}</div>`;
   }
-  function trafficHTML() {
-    const weekly=window.REPORT_OCTOBER_CLICKS.weekly;
-    const chart=(variant,width,height,left)=>{
-      const right=20,top=24,bottom=36,max=Math.ceil(Math.max(...weekly.map(w=>w.clicks))/200)*200;
-      const x=i=>left+i*(width-left-right)/(weekly.length-1),y=n=>top+(max-n)*(height-top-bottom)/max;
-      const grid=[0,.5,1].map(r=>`<line class="traffic-grid-line" x1="${left}" x2="${width-right}" y1="${y(max*r)}" y2="${y(max*r)}"/><text x="${left-8}" y="${y(max*r)+4}" text-anchor="end">${number(max*r)}</text>`).join('');
-      const line=`<polyline class="traffic-line traffic-line-google" points="${weekly.map((w,i)=>`${x(i)},${y(w.clicks)}`).join(' ')}"/>`;
-      const points=weekly.map((w,i)=>`<circle class="traffic-point traffic-point-google click-point" cx="${x(i)}" cy="${y(w.clicks)}" r="4" tabindex="0" data-week="${i}" aria-label="${dateLabel(w.date)} — ${dateLabel(w.endDate)}: ${number(w.clicks)} кликов"><title>${dateLabel(w.date)} — ${dateLabel(w.endDate)}: ${number(w.clicks)} кликов</title></circle>`).join('');
-      const indexes=variant==='mobile'?[0,2,4,6]:weekly.map((_,i)=>i);
-      const labels=indexes.map(i=>`<text x="${x(i)}" y="${height-9}" text-anchor="${i===0?'start':i===weekly.length-1?'end':'middle'}">${dateLabel(weekly[i].date).slice(0,5)}</text>`).join('');
-      return `<svg class="traffic-chart traffic-chart-${variant}" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="group" aria-label="Клики из Google по неделям">${grid}${line}${points}${labels}</svg>`;
-    };
-    return `<section class="traffic-section surface" aria-labelledby="click-chart-title"><div class="section-heading"><h2 id="click-chart-title">Клики из Google</h2></div><div class="clicks-history">${chart('desktop',780,240,48)}${chart('mobile',320,210,42)}<p id="click-tooltip" class="click-tooltip" aria-live="polite">&nbsp;</p></div></section>`;
+  function periodLabel(period) {
+    const format = day => new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long',timeZone:'UTC'}).format(new Date(day + 'T12:00:00Z'));
+    const start = period.from.slice(0,7) === period.to.slice(0,7) ? Number(period.from.slice(-2)) : format(period.from);
+    return `${start}–${format(period.to)}`;
+  }
+  function weekHasForecast(week, traffic) {
+    return !!traffic.forecastPeriod && week.to >= traffic.forecastPeriod.from;
+  }
+  function weekLabel(week,traffic) {
+    const range = `${dateLabel(week.from).slice(0,5)}–${dateLabel(week.to).slice(0,5)}`;
+    const breakdown = weekHasForecast(week,traffic) ? ` · факт ${number(week.actual)}, прогноз ${number(week.forecast)}` : '';
+    const visits = new Intl.PluralRules('ru').select(week.visits);
+    return `${range} · ${number(week.visits)} ${{one:'визит',few:'визита'}[visits] || 'визитов'}${breakdown}`;
+  }
+  function weeklyTrafficChart(traffic,variant,width,height) {
+    const weeks = traffic.weekly, last = weeks.length - 1;
+    const left = 38, right = width - 15, top = 25, bottom = height - 32;
+    const step = Math.ceil(Math.max(1, ...weeks.map(week => week.visits)) / 40) * 10;
+    const x = i => Number((left + (right-left) * i / Math.max(1,last)).toFixed(1));
+    const y = value => Number((bottom - (bottom-top)*value/(step*4)).toFixed(1));
+    const firstForecast = weeks.findIndex(week => weekHasForecast(week,traffic));
+    const count = firstForecast < 0 ? weeks.length : firstForecast;
+    const point = (week,i) => `${x(i)},${y(week.visits)}`;
+    const observed = weeks.slice(0,count).map(point);
+    const grid = Array.from({length:5},(_,i) => `<line class="weekly-gridline" x1="${left}" x2="${right}" y1="${y(step*i)}" y2="${y(step*i)}"/><text x="${left-7}" y="${y(step*i)+4}" text-anchor="end">${number(step*i)}</text>`).join('');
+    const area = count ? `<polygon class="weekly-area" points="${left},${bottom} ${observed.join(' ')} ${x(count-1)},${bottom}"/><polyline class="weekly-line" points="${observed.join(' ')}"/>` : '';
+    const projected = firstForecast < 0 ? '' : `<polyline class="weekly-line weekly-line-forecast" points="${weeks.map(point).slice(Math.max(0,count-1)).join(' ')}"/>`;
+    const dots = weeks.map((week,i) => `<g class="weekly-mark${weekHasForecast(week,traffic) ? ' is-forecast' : ''}${i === last ? ' is-current' : ''}" tabindex="${i === last ? 0 : -1}" data-visit-week="${i}" aria-label="${esc(weekLabel(week,traffic))}"><circle class="weekly-hit" cx="${x(i)}" cy="${y(week.visits)}" r="11"/><circle class="weekly-dot" cx="${x(i)}" cy="${y(week.visits)}" r="3.5"/></g>`).join('');
+    const stride = Math.max(1,Math.ceil(last/(variant === 'mobile' ? 4 : 6)));
+    const labels = weeks.map((week,i) => i === last || i % stride === 0 && last-i >= stride/2 ? `<text x="${x(i)}" y="${height-10}" text-anchor="${i === 0 ? 'start' : i === last ? 'end' : 'middle'}">${dateLabel(week.from).slice(0,5)}</text>` : '').join('');
+    return `<svg class="weekly-chart weekly-chart-${variant}" viewBox="0 0 ${width} ${height}" role="group" aria-label="Визиты из поиска по неделям">${grid}${area}${projected}${labels}${dots}<text class="weekly-value${firstForecast < 0 ? '' : ' is-forecast'}" x="${right-1}" y="${y(weeks[last].visits)-11}" text-anchor="end">${number(weeks[last].visits)}</text></svg>`;
+  }
+  function trafficHTML(traffic) {
+    if (!traffic?.weekly?.length) return '';
+    const {visits,previousVisits,forecastVisits,forecastPeriod,period,comparisonPeriod,weekly} = traffic;
+    const change = previousVisits ? Math.round((visits-previousVisits)/previousVisits*1000)/10 : null;
+    const delta = Number.isFinite(change) && change !== 0 ? `<span class="visits-change ${change > 0 ? 'positive' : 'negative'}">${change > 0 ? '+' : '−'}${number(Math.abs(change))}%</span>` : '';
+    const previous = comparisonPeriod ? `<span class="visits-before">${number(previousVisits)}</span>${icon('arrow','visits-arrow')}` : '';
+    const estimate = forecastPeriod ? `<div class="visits-estimate"><p>Прогноз за месяц</p><strong>${number(visits+forecastVisits)}</strong><span>визитов</span></div>` : '';
+    return `<section class="surface search-visits" aria-labelledby="search-visits-heading"><div class="visits-heading"><div><h3 id="search-visits-heading">Поисковый трафик</h3><p class="visits-period">${comparisonPeriod ? `${periodLabel(comparisonPeriod)} и ` : ''}${periodLabel(period)}</p><div class="visits-metric">${previous}<strong>${number(visits)}</strong>${delta}</div></div>${estimate}</div><figure class="weekly-figure"><div class="weekly-figure-heading"><figcaption>Визиты из поиска по неделям</figcaption><div class="weekly-legend"><span><i></i>Факт</span>${forecastPeriod ? '<span><i class="forecast-key"></i>Прогноз</span>' : ''}</div></div>${weeklyTrafficChart(traffic,'desktop',1000,236)}${weeklyTrafficChart(traffic,'mobile',320,196)}<p id="visits-readout" class="weekly-readout" aria-live="polite">${weekLabel(weekly.at(-1),traffic)}</p></figure></section>`;
   }
   function rankCell(value, archive = false, observation = {}) {
     if (observation.status === 'error') return '<span class="rank-missing rank-error" title="Проверка не завершилась. Это не потеря позиции.">Ошибка замера</span>';
@@ -178,7 +210,7 @@
     const filtered = M.filterRows(allRows,state.filters,report.rankings?.cohorts), visible = filtered.slice(0,state.limit);
     if (!archive) {
       view.stats = M.statsForRows(filtered,{comparable:state.filters.cohort !== 'new'});
-      $('ranking-summary').innerHTML = engineKpisHTML() + rankCharts();
+      $('ranking-summary').innerHTML = rankSummaryHTML();
     }
     for (const engine of M.ENGINES) for (const column of positionColumns[engine]) {
       const element = $(`rank-share-${engine}-${column.key}`);
@@ -201,7 +233,9 @@
     const introBody = report.intro.map(report.archive ? paragraphsHTML : detailParagraphsHTML).join('');
     let intro = introBody && !report.archive ? `<div class="results-intro">${introBody}</div>` : introBody;
     if (report.conclusions.length) intro += '<p class="archive-conclusion-title">Выводы</p>' + report.conclusions.map(paragraphsHTML).join('');
-    return `<div class="results-heading"><h2>Результаты за ${M.monthLabel(state.month).toLowerCase()}</h2>${intro}</div>${report.archive || view ? `<div id="ranking-summary">${engineKpisHTML() + rankCharts()}</div>` + queryTableHTML() : pendingHTML('results')}`;
+    const heading = `<div class="results-heading"><h2>Результаты за ${M.monthLabel(state.month).toLowerCase()}</h2>${intro}</div>`;
+    const content = report.archive || view ? `<div id="ranking-summary">${rankSummaryHTML()}</div>` + queryTableHTML() : pendingHTML('results');
+    return report.resultLayout === 'monthly' ? `<div class="monthly-results">${heading}${trafficHTML(report.traffic)}${content}</div>` : heading + content;
   }
   function worksHTML() {
     if (!report.works.length) return pendingHTML('works');
@@ -322,25 +356,47 @@
   });
   dialog.addEventListener('click',event => { if (event.target === dialog) { const r = dialog.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) navigate({detail:null}); } });
   function exportPositions() {
-    const filtered=M.filterRows(queryPopulation(),state.filters,report.rankings.cohorts),ids=new Set(filtered.map(r=>r.id));
+    const filtered=M.filterRows(queryPopulation(),state.filters,report.rankings.cohorts);
+    const records=report.resultLayout === 'monthly' ? (()=>{
+      const columns=M.ENGINES.flatMap(engine=>positionColumns[engine].map(column=>({engine,...column})));
+      const label = {yandex:'Яндекс',google:'Google'};
+      return [ ['Запрос','Направление',...columns.map(c=>`${label[c.engine]} ${dateLabel(c.date)}`)],
+        ...filtered.map(row=>[row.query,row.direction,...columns.map(c=>row[c.engine][c.key]??101)]) ];
+    })() : octoberPositionRecords(filtered);
+    const csv='\ufeff'+records.map(row=>row.map(value=>`"${String(value).replaceAll('"','""')}"`).join(';')).join('\r\n');
+    const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=`moscow-positions-${state.month}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function octoberPositionRecords(filtered) {
+    const ids=new Set(filtered.map(row=>row.id));
     const records=[['Запрос','Направление','Поисковик','Дата','Позиция','Есть замер','Статус','URL','Источник']];
-    for(const row of window.REPORT_OCTOBER_RANKINGS.rows.filter(r=>ids.has(r.id))) for(const engine of ['yandex','google']) {
+    for(const row of window.REPORT_OCTOBER_RANKINGS.rows.filter(r=>ids.has(r.id))) for(const engine of M.ENGINES) {
       const raw=engine==='yandex'?row:row.google;
       ['start','before','after'].forEach((role,i)=>records.push([row.query,row.group,engine,snapshotDate(view[role],engine),raw.positions[i]??'',raw.available[i]?'1':'0',i===2?raw.status:!raw.available[i]?'missing':raw.positions[i]==null?'not_found':'found',raw.urls[i]||'',i===2?'XMLStock':'Topvisor']));
     }
-    const csv='\ufeff'+records.map(row=>row.map(value=>`"${String(value).replaceAll('"','""')}"`).join(';')).join('\r\n');
-    const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='moscow-positions-2026-10.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    return records;
   }
   document.addEventListener('click',event=>{if(event.target.closest('#export-positions'))exportPositions();});
-  function showClickTooltip(event) {
-    const point=event.target.closest?.('.click-point');if(!point)return;
-    const week=window.REPORT_OCTOBER_CLICKS.weekly[Number(point.dataset.week)];
-    $('click-tooltip').textContent=`${dateLabel(week.date)} — ${dateLabel(week.endDate)} · ${number(week.clicks)} кликов`;
+  function showVisitWeek(event) {
+    const point = event.target.closest?.('[data-visit-week]');
+    if (!point) return;
+    const readout = $('visits-readout');
+    const label = point.getAttribute('aria-label');
+    if (readout.textContent !== label) readout.textContent = label;
+    for (const mark of point.closest('.weekly-figure').querySelectorAll('[data-visit-week]')) {
+      const current = mark.dataset.visitWeek === point.dataset.visitWeek;
+      mark.classList.toggle('is-current',current);
+      mark.setAttribute('tabindex',current?'0':'-1');
+    }
   }
-  document.addEventListener('pointerover',showClickTooltip);document.addEventListener('focusin',showClickTooltip);
+  for (const type of ['pointerover','click','focusin']) document.addEventListener(type,showVisitWeek);
   document.addEventListener('keydown',event=>{
-    const point=event.target.closest?.('.click-point');if(!point||!['ArrowLeft','ArrowRight'].includes(event.key))return;
-    event.preventDefault();const points=[...point.parentElement.querySelectorAll('.click-point')],index=points.indexOf(point);points[Math.max(0,Math.min(points.length-1,index+(event.key==='ArrowRight'?1:-1)))].focus();
+    const point = event.target.closest?.('[data-visit-week]');
+    if (!point || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+    event.preventDefault();
+    const points = [...point.parentElement.querySelectorAll('[data-visit-week]')];
+    const index = points.indexOf(point), last = points.length-1;
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? last : Math.max(0,Math.min(last,index+(event.key==='ArrowRight'?1:-1)));
+    points[next].focus();
   });
   function restoreRoute() {
     if(new URLSearchParams(location.search).get('month')==='2026-09') { location.reload(); return; }
