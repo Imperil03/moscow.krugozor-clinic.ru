@@ -460,15 +460,15 @@ window.REPORT_MONTHLY_RESULTS = {
       ]
     },
     "traffic": {
-      "visits": 7006,
-      "previousVisits": 6020,
+      "visits": 9161,
+      "previousVisits": 7740,
       "period": {
-        "from": "2026-11-02",
-        "to": "2026-11-22"
+        "from": "2026-11-01",
+        "to": "2026-11-27"
       },
       "comparisonPeriod": {
-        "from": "2026-10-12",
-        "to": "2026-11-01"
+        "from": "2026-10-01",
+        "to": "2026-10-27"
       },
       "forecastPeriod": {
         "from": "2026-11-28",
@@ -476,6 +476,13 @@ window.REPORT_MONTHLY_RESULTS = {
       },
       "forecastVisits": 550,
       "weekly": [
+        {
+          "from": "2026-10-05",
+          "to": "2026-10-11",
+          "visits": 2169,
+          "actual": 2169,
+          "forecast": 0
+        },
         {
           "from": "2026-10-12",
           "to": "2026-10-18",
