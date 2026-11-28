@@ -23,14 +23,24 @@
  }));
  function adaptMonthlyRankings(rankings) {
   const {context,dates,rows}=rankings;
+  function rowAtDate([id,query,direction,yandex,google],index) {
+   if(!rankings.observations) return {id,query,direction,yandex:yandex[index],google:google[index]};
+   const result={id,query,direction,observations:{}};
+   for(const [engine,values] of Object.entries({yandex,google})) {
+    const observation=rankings.observations[id][engine][index];
+    result.observations[engine]=observation;
+    if(observation.status==='found' || observation.status==='not_found') result[engine]=values[index];
+   }
+   return result;
+  }
   const slice=index=>({
    date:dates.yandex[index], region:context.region, device:context.device, sourceKey:'report',
    engines:Object.fromEntries(['yandex','google'].map((engine, searcher)=>[
     engine,{...context,searcher,checkedAt:dates[engine][index]}
    ])),
-   rows:rows.map(([id,query,direction,yandex,google])=>({id,query,direction,yandex:yandex[index],google:google[index]}))
+   rows:rows.map(row=>rowAtDate(row,index))
   });
-  return {start:slice(0),before:slice(1),after:slice(2)};
+  return {start:slice(0),before:slice(1),after:slice(2),cohorts:rankings.cohorts,defaultCohort:rankings.defaultCohort};
  }
  const monthlyReports=[...new Set(['2026-11',...Object.keys(monthlyResults)])].sort().map(month=>{
   const monthData=monthlyResults[month];
